@@ -4,15 +4,14 @@
 :- (dynamic[current/3]).
 :- retractall(current(_, _, _)).
 :- retractall(hasarrow).
-:- asserta(current(0, 0, rnorth)).
-:- asserta(hasarrow).
+:- assertz(current(0, 0, rnorth)).
+:- assertz(hasarrow).
+:- assertz(visited(0, 0)).
 
-test :-
-    current(X, Y, D),
-    X1 is X+1,
-    write(X1),
-    write(Y),
-    write(D).
+reborn :-
+    reposition([off, off, off, off, off, off]),
+    retractall(hasarrow),
+    assertz(hasarrow).
 
 move(A) :-
     (   A=shoot
@@ -24,6 +23,8 @@ move(A) :-
     ->  turnleft
     ;   A=turnright
     ->  turnright
+    ;   A=pickup
+    ->  pickup
     ).
 
 forward :-
@@ -31,49 +32,68 @@ forward :-
     (   D=rnorth
     ->  Y1 is Y+1,
         retractall(current(_, _, _)),
-        asserta(current(X, Y1, D))
+        assertz(visited(X, Y1)),
+        assertz(current(X, Y1, D))
     ;   D=rwest
     ->  X1 is X-1,
         retractall(current(_, _, _)),
-        asserta(current(X1, Y, D))
+        assertz(visited(X1, Y)),
+        assertz(current(X1, Y, D))
     ;   D=reast
     ->  X1 is X+1,
         retractall(current(_, _, _)),
-        asserta(current(X1, Y, D))
+        assertz(visited(X1, Y)),
+        assertz(current(X1, Y, D))
     ;   D=rsouth
     ->  Y1 is Y-1,
         retractall(current(_, _, _)),
-        asserta(current(X, Y1, D))
+        assertz(visited(X, Y1)),
+        assertz(current(X, Y1, D))
     ).
 
 turnleft :-
     current(X, Y, D),
     (   D=rnorth
-    ->  asserta(current(X, Y, rwest))
+    ->  retractall(current(_, _, _)),
+        assertz(current(X, Y, rwest))
     ;   D=rwest
-    ->  asserta(current(X, Y, rsouth))
+    ->  retractall(current(_, _, _)),
+        assertz(current(X, Y, rsouth))
     ;   D=reast
-    ->  asserta(current(X, Y, rnorth))
+    ->  retractall(current(_, _, _)),
+        assertz(current(X, Y, rnorth))
     ;   D=rsouth
-    ->  asserta(current(X, Y, reast))
+    ->  retractall(current(_, _, _)),
+        assertz(current(X, Y, reast))
     ).
 
 turnright :-
     current(X, Y, D),
     (   D=rnorth
-    ->  asserta(current(X, Y, reast))
+    ->  retractall(current(_, _, _)),
+        assertz(current(X, Y, reast))
     ;   D=rwest
-    ->  asserta(current(X, Y, rnorth))
+    ->  retractall(current(_, _, _)),
+        assertz(current(X, Y, rnorth))
     ;   D=reast
-    ->  asserta(current(X, Y, rsouth))
+    ->  retractall(current(_, _, _)),
+        assertz(current(X, Y, rsouth))
     ;   D=rsouth
-    ->  asserta(current(X, Y, rwest))
+    ->  retractall(current(_, _, _)),
+        assertz(current(X, Y, rwest))
+    ).
+
+pickup :-
+    current(X, Y, _),
+    (   glitter(X, Y)
+    ->  retract(glitter(X, Y)),
+        retract(glitter)
     ).
 
 confounded(A) :-
     (   A=on
     ->  (   not(confounded)
-        ->  asserta(confounded)
+        ->  assertz(confounded)
         ;    !
         )
     ;   A=off
@@ -86,7 +106,7 @@ confounded(A) :-
 stench(A) :-
     (   A=on
     ->  (   not(stench)
-        ->  asserta(stench)
+        ->  assertz(stench)
         ;    !
         )
     ;   A=off
@@ -99,7 +119,7 @@ stench(A) :-
 tingle(A) :-
     (   A=on
     ->  (   not(tingle)
-        ->  asserta(tingle)
+        ->  assertz(tingle)
         ;    !
         )
     ;   A=off
@@ -112,7 +132,7 @@ tingle(A) :-
 glitter(A) :-
     (   A=on
     ->  (   not(glitter)
-        ->  asserta(glitter)
+        ->  assertz(glitter)
         ;    !
         )
     ;   A=off
@@ -125,7 +145,7 @@ glitter(A) :-
 bump(A) :-
     (   A=on
     ->  (   not(bump)
-        ->  asserta(bump)
+        ->  assertz(bump)
         ;    !
         )
     ;   A=off
@@ -138,7 +158,7 @@ bump(A) :-
 scream(A) :-
     (   A=on
     ->  (   not(scream)
-        ->  asserta(scream)
+        ->  assertz(scream)
         ;    !
         )
     ;   A=off
@@ -157,6 +177,8 @@ reposition([LA, LB, LC, LD, LE, LF]) :-
     retractall(stench(_, _)),
     retractall(safe(_, _)),
     retractall(wall(_, _)),
+    retractall(current(_, _, _)),
+    assertz(current(0, 0, rnorth)),
     confounded(LA),
     stench(LB),
     tingle(LC),
@@ -165,10 +187,18 @@ reposition([LA, LB, LC, LD, LE, LF]) :-
     scream(LF).
 
 move(A, [LA, LB, LC, LD, LE, LF]) :-
-    move(A),
     confounded(LA),
     stench(LB),
     tingle(LC),
     glitter(LD),
     bump(LE),
-    scream(LF).
+    scream(LF),
+    move(A).
+
+explore([H|T]) :-
+    (   write(H),
+        length(T, L),
+        L\=0
+    ->  explore(T)
+    ;    !
+    ).
