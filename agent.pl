@@ -13,6 +13,9 @@ reborn :-
     retractall(hasarrow),
     assertz(hasarrow).
 
+test :-
+    assertz(explore([moveforward])).
+
 move(A) :-
     (   A=shoot
     ->  retract(hasarrow),
@@ -197,8 +200,27 @@ move(A, [LA, LB, LC, LD, LE, LF]) :-
 
 explore([H|T]) :-
     (   write(H),
+        H=moveforward
+    ->  checksafe
+    ;    !,
         length(T, L),
         L\=0
     ->  explore(T)
     ;    !
+    ).
+
+checksafe :-
+    current(X, Y, D),
+    (   D=rnorth
+    ->  Y1 is Y+1,
+        safe(X, Y1)
+    ;   D=rwest
+    ->  X1 is X-1,
+        safe(X1, Y)
+    ;   D=reast
+    ->  X1 is X+1,
+        safe(X1, Y)
+    ;   D=rsouth
+    ->  Y1 is Y-1,
+        safe(X, Y1)
     ).
