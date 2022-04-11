@@ -18,8 +18,7 @@ test :-
 
 move(A) :-
     (   A=shoot
-    ->  retract(hasarrow),
-        write(shoot)
+    ->  shoot
     ;   A=moveforward
     ->  forward
     ;   A=turnleft
@@ -29,6 +28,11 @@ move(A) :-
     ;   A=pickup
     ->  pickup
     ).
+
+shoot :-
+    retract(hasarrow),
+    retract(wumpus(_, _)),
+    write(shoot).
 
 forward :-
     current(X, Y, D),
@@ -108,7 +112,9 @@ confounded(A) :-
 
 stench(A) :-
     (   A=on
-    ->  (   not(stench)
+    ->  current(X, Y, _),
+        assertz(stench(X, Y)),
+        (   not(stench)
         ->  assertz(stench)
         ;    !
         )
@@ -121,7 +127,9 @@ stench(A) :-
 
 tingle(A) :-
     (   A=on
-    ->  (   not(tingle)
+    ->  current(X, Y, _),
+        assertz(tingle(X, Y)),
+        (   not(tingle)
         ->  assertz(tingle)
         ;    !
         )
@@ -134,7 +142,9 @@ tingle(A) :-
 
 glitter(A) :-
     (   A=on
-    ->  (   not(glitter)
+    ->  current(X, Y, _),
+        assertz(glitter(X, Y)),
+        (   not(glitter)
         ->  assertz(glitter)
         ;    !
         )
