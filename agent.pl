@@ -1,4 +1,4 @@
-:- (dynamic[visited/2, wumpus/2, confundus/2, tingle/2, glitter/2, stench/2, safe/2, wall/2]).
+- (dynamic[visited/2, wumpus/2, confundus/2, tingle/2, glitter/2, stench/2, safe/2, wall/2]).
 :- (dynamic[confounded/0, stench/0, tingle/0, glitter/0, bump/0, scream/0]).
 :- (dynamic[hasarrow/0]).
 :- (dynamic[current/3]).
@@ -7,9 +7,10 @@
 :- assertz(current(0, 0, rnorth)).
 :- assertz(hasarrow).
 :- assertz(visited(0, 0)).
+:- assertz(confounded).
 
 reborn :-
-    reposition([off, off, off, off, off, off]),
+    reposition([on, off, off, off, off, off]),
     retractall(hasarrow),
     assertz(hasarrow).
 
@@ -38,24 +39,36 @@ forward :-
     current(X, Y, D),
     (   D=rnorth
     ->  Y1 is Y+1,
-        retractall(current(_, _, _)),
-        assertz(visited(X, Y1)),
-        assertz(current(X, Y1, D))
+        (   bump
+        ->  assertz(wall(X, Y1))
+        ;   retractall(current(_, _, _)),
+            assertz(visited(X, Y1)),
+            assertz(current(X, Y1, D))
+        )
     ;   D=rwest
     ->  X1 is X-1,
-        retractall(current(_, _, _)),
-        assertz(visited(X1, Y)),
-        assertz(current(X1, Y, D))
+        (   bump
+        ->  assertz(wall(X1, Y))
+        ;   retractall(current(_, _, _)),
+            assertz(visited(X1, Y)),
+            assertz(current(X1, Y, D))
+        )
     ;   D=reast
     ->  X1 is X+1,
-        retractall(current(_, _, _)),
-        assertz(visited(X1, Y)),
-        assertz(current(X1, Y, D))
+        (   bump
+        ->  assertz(wall(X1, Y))
+        ;   retractall(current(_, _, _)),
+            assertz(visited(X1, Y)),
+            assertz(current(X1, Y, D))
+        )
     ;   D=rsouth
     ->  Y1 is Y-1,
-        retractall(current(_, _, _)),
-        assertz(visited(X, Y1)),
-        assertz(current(X, Y1, D))
+        (   bump
+        ->  assertz(wall(X, Y1))
+        ;   retractall(current(_, _, _)),
+            assertz(visited(X, Y1)),
+            assertz(current(X, Y1, D))
+        )
     ).
 
 turnleft :-
@@ -192,6 +205,7 @@ reposition([LA, LB, LC, LD, LE, LF]) :-
     retractall(wall(_, _)),
     retractall(current(_, _, _)),
     assertz(current(0, 0, rnorth)),
+    assertz(visited(0, 0)),
     confounded(LA),
     stench(LB),
     tingle(LC),
