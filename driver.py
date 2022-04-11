@@ -1,5 +1,4 @@
 from pyswip import Prolog
-rm ast import While
 
 # X row width
 # Y column height
