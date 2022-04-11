@@ -180,6 +180,17 @@ scream(A) :-
         ;    !
         )
     ).
+localisation(X, Y) :-
+    visited(X, Y),
+    wumpus(X, Y),
+    confundus(X, Y),
+    tingle(X, Y),
+    glitter(X, Y),
+    stench(X, Y),
+    safe(X, Y),
+    wall(X, Y).
+    
+
 
 reposition([LA, LB, LC, LD, LE, LF]) :-
     retractall(visited(_, _)),

@@ -1,5 +1,5 @@
 from pyswip import Prolog
-rom ast import While
+from ast import While
 
 # X row width
 # Y column height
@@ -86,7 +86,7 @@ def generate_map():
     change_symbol(board, 2, 1, 6, "-")
     change_symbol(board, 2, 1, 4, "-")
     change_symbol(board, 2, 1, 5, "∧")
-    agent.update({'direction': 'north', 'X': 2, 'Y': 1})
+    agent.update({'direction': 'north', 'X': 1, 'Y': 1})
     change_symbol(board, 3, 2, 7, "*")
     set_wumpus_cell(board, 2, 4)
     set_portal_cell(board, 4, 3)
