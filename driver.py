@@ -1,5 +1,5 @@
 from pyswip import Prolog
-rom ast import While
+rm ast import While
 
 # X row width
 # Y column height
@@ -11,7 +11,9 @@ prolog = Prolog()
 prolog.consult("agent.pl")
 
 walls = []
-
+wampus = []
+portals = []
+has_arrow = True
 agent = {}
 
 
@@ -39,9 +41,11 @@ def change_symbol(board, X, Y, symbolno, symbol):
 
 
 def set_wumpus_cell(board, X, Y):
+    change_symbol(board, X, Y, 4, "-")
     change_symbol(board, X, Y, 5, "W")
     change_symbol(board, X, Y, 6, "-")
-    change_symbol(board, X, Y, 4, "-")
+    if f'{X},{Y}' not in wampus:
+        wampus.append(f'{X},{Y}')
     change_symbol(board, X+1, Y, 2, "=")
     change_symbol(board, X-1, Y, 2, "=")
     change_symbol(board, X, Y+1, 2, "=")
@@ -49,13 +53,50 @@ def set_wumpus_cell(board, X, Y):
 
 
 def set_portal_cell(board, X, Y):
+    change_symbol(board, X, Y, 4, "-")
     change_symbol(board, X, Y, 5, "O")
     change_symbol(board, X, Y, 6, "-")
-    change_symbol(board, X, Y, 4, "-")
+    portals.append(f'{X},{Y}')
     change_symbol(board, X+1, Y, 3, "T")
     change_symbol(board, X-1, Y, 3, "T")
     change_symbol(board, X, Y+1, 3, "T")
     change_symbol(board, X, Y-1, 3, "T")
+
+
+def kill_wampus(board, X, Y):
+    change_symbol(board, X, Y, 4, " ")
+    change_symbol(board, X, Y, 5, "s")
+    change_symbol(board, X, Y, 6, " ")
+    wampus.remove(f'{X},{Y}')
+    change_symbol(board, X+1, Y, 2, ".")
+    change_symbol(board, X-1, Y, 2, ".")
+    change_symbol(board, X, Y+1, 2, ".")
+    change_symbol(board, X, Y-1, 2, ".")
+
+
+def set_visited_cell(board, X, Y):
+    change_symbol(board, X, Y, 1, ".")
+    change_symbol(board, X, Y, 4, " ")
+    change_symbol(board, X, Y, 5, "S")
+    change_symbol(board, X, Y, 6, " ")
+    change_symbol(board, X, Y, 8, ".")
+    change_symbol(board, X, Y, 9, ".")
+
+
+def set_agent_cell(board, X, Y, direction):
+    change_symbol(board, X, Y, 1, ".")
+    change_symbol(board, X, Y, 4, "-")
+    change_symbol(board, X, Y, 6, "-")
+    change_symbol(board, X, Y, 8, ".")
+    change_symbol(board, X, Y, 9, ".")
+    if direction == 'north':
+        change_symbol(board, X, Y, 5, "∧")
+    elif direction == 'west':
+        change_symbol(board, X, Y, 5, "<")
+    elif direction == 'east':
+        change_symbol(board, X, Y, 5, ">")
+    elif direction == 'south':
+        change_symbol(board, X, Y, 5, "∨")
 
 
 def set_wall_cell(board, X, Y):
@@ -73,8 +114,8 @@ def generate_cell():
     return cell
 
 
-def generate_map():
-    board = [[generate_cell() for y in range(h)] for x in range(w)]
+def generate_abs_map():
+    board = [[generate_cell() for Y in range(h)] for X in range(w)]
 
     for X in range(len(board)):
         for Y in range(len(board[X])):
@@ -83,10 +124,11 @@ def generate_map():
             else:
                 change_symbol(board, X, Y, 5, "s")
 
-    change_symbol(board, 2, 1, 6, "-")
-    change_symbol(board, 2, 1, 4, "-")
-    change_symbol(board, 2, 1, 5, "∧")
+    set_agent_cell(board, 2, 1, 'north')
+    change_symbol(board, 2, 1, 1, "%")
     agent.update({'direction': 'north', 'X': 2, 'Y': 1})
+    global has_arrow
+    has_arrow = True
     change_symbol(board, 3, 2, 7, "*")
     set_wumpus_cell(board, 2, 4)
     set_portal_cell(board, 4, 3)
@@ -94,113 +136,177 @@ def generate_map():
     return board
 
 
+def reset_map(board):
+    for X in range(len(board)):
+        for Y in range(len(board[X])):
+            if f'{X},{Y}' not in wampus and f'{X},{Y}' not in walls and f'{X},{Y}' not in portals:
+                change_symbol(board, X, Y, 5, "s")
+
+    set_agent_cell(board, 2, 1, 'north')
+    change_symbol(board, 2, 1, 1, "%")
+    agent['direction'] = 'north'
+    agent['X'] = 2
+    agent['Y'] = 1
+    global has_arrow
+    has_arrow = True
+    change_symbol(board, 3, 2, 7, "*")
+    set_wumpus_cell(board, 2, 4)
+
+
+def teleport(board):
+    for X in range(len(board)):
+        for Y in range(len(board[X])):
+            if f'{X},{Y}' not in wampus and f'{X},{Y}' not in walls and f'{X},{Y}' not in portals:
+                change_symbol(board, X, Y, 5, "s")
+
+    set_agent_cell(board, 5, 4, 'north')
+    change_symbol(board, 5, 4, 1, "%")
+    agent['direction'] = 'north'
+    agent['X'] = 5
+    agent['Y'] = 4
+
+
 def move_forward(board):
     direction = agent['direction']
-    x = agent['X']
-    y = agent['Y']
+    X = agent['X']
+    Y = agent['Y']
 
     if direction == 'north':
-        y1 = y+1
-        if f'{x},{y1}' not in walls:
-            change_symbol(board, x, y, 6, ".")
-            change_symbol(board, x, y, 4, ".")
-            change_symbol(board, x, y, 8, ".")
-            change_symbol(board, x, y, 5, "S")
-            change_symbol(board, x, y1, 6, "-")
-            change_symbol(board, x, y1, 4, "-")
-            change_symbol(board, x, y1, 5, "∧")
-            agent['Y'] = y1
+        Y1 = Y+1
+        if f'{X},{Y1}' in wampus:
+            set_visited_cell(board, X, Y)
+            reset_map(board)
+        elif f'{X},{Y1}' in portals:
+            set_visited_cell(board, X, Y)
+            teleport(board)
+        elif f'{X},{Y1}' in walls:
+            change_symbol(board, X, Y, 8, "B")
         else:
-            change_symbol(board, x, y, 8, "B")
+            set_visited_cell(board, X, Y)
+            set_agent_cell(board, X, Y1, direction)
+            agent['Y'] = Y1
     elif direction == 'west':
-        x1 = x-1
-        if f'{x1},{y}' not in walls:
-            change_symbol(board, x, y, 6, ".")
-            change_symbol(board, x, y, 4, ".")
-            change_symbol(board, x, y, 8, ".")
-            change_symbol(board, x, y, 5, "S")
-            change_symbol(board, x1, y, 6, "-")
-            change_symbol(board, x1, y, 4, "-")
-            change_symbol(board, x1, y, 5, "<")
-            agent['X'] = x1
+        X1 = X-1
+        if f'{X1},{Y}' in wampus:
+            set_visited_cell(board, X, Y)
+            reset_map(board)
+        elif f'{X1},{Y}' in portals:
+            set_visited_cell(board, X, Y)
+            teleport(board)
+        elif f'{X1},{Y}' in walls:
+            change_symbol(board, X, Y, 8, "B")
         else:
-            change_symbol(board, x, y, 8, "B")
+            set_visited_cell(board, X, Y)
+            set_agent_cell(board, X1, Y, direction)
+            agent['X'] = X1
     elif direction == 'east':
-        x1 = x+1
-        if f'{x1},{y}' not in walls:
-            change_symbol(board, x, y, 6, ".")
-            change_symbol(board, x, y, 4, ".")
-            change_symbol(board, x, y, 8, ".")
-            change_symbol(board, x, y, 5, "S")
-            change_symbol(board, x1, y, 6, "-")
-            change_symbol(board, x1, y, 4, "-")
-            change_symbol(board, x1, y, 5, ">")
-            agent['X'] = x1
+        X1 = X+1
+        if f'{X1},{Y}' in wampus:
+            set_visited_cell(board, X, Y)
+            reset_map(board)
+        elif f'{X1},{Y}' in portals:
+            set_visited_cell(board, X, Y)
+            teleport(board)
+        if f'{X1},{Y}' in walls:
+            change_symbol(board, X, Y, 8, "B")
         else:
-            change_symbol(board, x, y, 8, "B")
+            set_visited_cell(board, X, Y)
+            set_agent_cell(board, X1, Y, direction)
+            agent['X'] = X1
     elif direction == 'south':
-        y1 = y-1
-        if f'{x},{y1}' not in walls:
-            change_symbol(board, x, y, 6, ".")
-            change_symbol(board, x, y, 4, ".")
-            change_symbol(board, x, y, 8, ".")
-            change_symbol(board, x, y, 5, "S")
-            change_symbol(board, x, y1, 6, "-")
-            change_symbol(board, x, y1, 4, "-")
-            change_symbol(board, x, y1, 5, "∨")
-            agent['Y'] = y1
+        Y1 = Y-1
+        if f'{X},{Y1}' in wampus:
+            set_visited_cell(board, X, Y)
+            reset_map(board)
+        elif f'{X},{Y1}' in portals:
+            set_visited_cell(board, X, Y)
+            teleport(board)
+        elif f'{X},{Y1}' in walls:
+            change_symbol(board, X, Y, 8, "B")
         else:
-            change_symbol(board, x, y, 8, "B")
+            set_visited_cell(board, X, Y)
+            set_agent_cell(board, X, Y1, direction)
+            agent['Y'] = Y1
 
 
 def turn_left(board):
     direction = agent['direction']
-    x = agent['X']
-    y = agent['Y']
+    X = agent['X']
+    Y = agent['Y']
     if direction == 'north':
-        change_symbol(board, x, y, 5, "<")
-        change_symbol(board, x, y, 8, ".")
+        set_agent_cell(board, X, Y, 'west')
         agent['direction'] = 'west'
     elif direction == 'west':
-        change_symbol(board, x, y, 5, "∨")
-        change_symbol(board, x, y, 8, ".")
+        set_agent_cell(board, X, Y, 'south')
         agent['direction'] = 'south'
     elif direction == 'east':
-        change_symbol(board, x, y, 5, "∧")
-        change_symbol(board, x, y, 8, ".")
+        set_agent_cell(board, X, Y, 'north')
         agent['direction'] = 'north'
     elif direction == 'south':
-        change_symbol(board, x, y, 5, ">")
-        change_symbol(board, x, y, 8, ".")
+        set_agent_cell(board, X, Y, 'east')
         agent['direction'] = 'east'
 
 
 def turn_right(board):
     direction = agent['direction']
-    x = agent['X']
-    y = agent['Y']
+    X = agent['X']
+    Y = agent['Y']
     if direction == 'north':
-        change_symbol(board, x, y, 5, ">")
-        change_symbol(board, x, y, 8, ".")
+        set_agent_cell(board, X, Y, 'east')
         agent['direction'] = 'east'
     elif direction == 'west':
-        change_symbol(board, x, y, 5, "∧")
-        change_symbol(board, x, y, 8, ".")
+        set_agent_cell(board, X, Y, 'north')
         agent['direction'] = 'north'
     elif direction == 'east':
-        change_symbol(board, x, y, 5, "∨")
-        change_symbol(board, x, y, 8, ".")
+        set_agent_cell(board, X, Y, 'south')
         agent['direction'] = 'south'
     elif direction == 'south':
-        change_symbol(board, x, y, 5, "<")
-        change_symbol(board, x, y, 8, ".")
+        set_agent_cell(board, X, Y, 'west')
         agent['direction'] = 'west'
 
 
 def pickup(board):
-    x = agent['X']
-    y = agent['Y']
-    change_symbol(board, x, y, 7, ".")
+    X = agent['X']
+    Y = agent['Y']
+    change_symbol(board, X, Y, 7, ".")
+
+
+def shoot(board):
+    direction = agent['direction']
+    X = agent['X']
+    Y = agent['Y']
+    global has_arrow
+
+    if has_arrow:
+        if direction == 'north':
+            for Y1 in range(Y+1, h-1):
+                cell = board[X][Y1]
+                if cell[1][1] == 'W':
+                    kill_wampus(board, X, Y1)
+                    change_symbol(board, X, Y, 9, "@")
+            has_arrow = False
+        elif direction == 'west':
+            for X1 in range(X-1, 0, -1):
+                cell = board[X1][Y]
+                if cell[1][1] == 'W':
+                    kill_wampus(board, X1, Y)
+                    change_symbol(board, X, Y, 9, "@")
+        elif direction == 'east':
+            for X1 in range(X+1, w-1):
+                cell = board[X1][Y]
+                if cell[1][1] == 'W':
+                    has_arrow = False
+                    kill_wampus(board, X1, Y)
+                    change_symbol(board, X, Y, 9, "@")
+            has_arrow = False
+        elif direction == 'south':
+            for Y1 in range(Y-1, 0, -1):
+                cell = board[X][Y1]
+                if cell[1][1] == 'W':
+                    has_arrow = False
+                    kill_wampus(board, X, Y1)
+                    change_symbol(board, X, Y, 9, "@")
+            has_arrow = False
 
 
 def move_agent(board, action):
@@ -212,10 +318,46 @@ def move_agent(board, action):
         turn_right(board)
     elif action == 'pickup':
         pickup(board)
+    elif action == 'shoot':
+        shoot(board)
+
+
+def get_indicator(board):
+    indicators = []
+    X = agent['X']
+    Y = agent['Y']
+    cell = board[X][Y]
+
+    if cell[0][0] == '%':
+        indicators.append('on')
+    else:
+        indicators.append('off')
+    if cell[1][0] == '=':
+        indicators.append('on')
+    else:
+        indicators.append('off')
+    if cell[2][0] == 'T':
+        indicators.append('on')
+    else:
+        indicators.append('off')
+    if cell[0][2] == '*':
+        indicators.append('on')
+    else:
+        indicators.append('off')
+    if cell[1][2] == 'B':
+        indicators.append('on')
+    else:
+        indicators.append('off')
+    if cell[2][2] == '@':
+        indicators.append('on')
+    else:
+        indicators.append('off')
+
+    return indicators
 
 
 def print_map_with_border(board):
-    line = [["|" for y in range(innerH)] for x in range(h)]
+    line = [["|" for Y in range(innerH)] for X in range(h)]
 
     for X in range(len(board)):
         for Y in range(len(board[X])):
@@ -245,9 +387,9 @@ def print_map_with_border(board):
         print()
 
 
-def print_map(board):
+def print_abs_map(board):
 
-    line = [["" for y in range(innerH)] for x in range(h)]
+    line = [["" for Y in range(innerH)] for X in range(h)]
 
     for X in range(len(board)):
         for Y in range(len(board[X])):
@@ -266,20 +408,25 @@ def print_map(board):
         print()
 
 
-def print_relative():
-    board = [[[['.' for innerY in range(innerH)] for innerX in range(innerW)]
-              for y in range(h)] for x in range(w)]
+def print_relative_map():
+    board = [[generate_cell() for Y in range(h)] for X in range(w)]
+
+    current = list(prolog.query("current(X,Y,D)"))[0]
+    print(current)
+
+    direction = current['D']
+    X = current['X']
+    Y = current['Y']
+
+    set_agent_cell(board, X, Y, 'north')
 
     visited = []
     for soln in prolog.query("visited(X,Y)"):
         visited.append(f'{soln["X"]},{soln["Y"]}')
 
-    current = list(prolog.query("current(X,Y,D)"))[0]
-
     print(visited)
-    print(current)
 
-    line = [["" for y in range(innerH)] for x in range(h)]
+    line = [["" for Y in range(innerH)] for X in range(h)]
 
     for X in range(len(board)):
         for Y in range(len(board[X])):
@@ -300,47 +447,56 @@ def print_relative():
 
 
 def main():
-    board = generate_map()
-    print_map(board)
-    print_relative()
+    board = generate_abs_map()
+    print_abs_map(board)
+    # print_relative()
     while True:
         print("1. Testing Mode")
         print("0. Exit")
         option = input()
         if option == '1':
+            print_abs_map(board)
             while True:
                 print('Actions')
                 print('1. Move Forward')
                 print('2. Turn Left')
                 print('3. Turn Right')
                 print('4. Pick Up')
+                print('5. Shoot')
                 print("0. Exit")
                 option = input()
                 if option == '1':
                     move_agent(board, 'moveforward')
-                    print_map(board)
+                    print_abs_map(board)
+                    indicators = ','.join(map(str, get_indicator(board)))
                     list(prolog.query(
-                        "move(moveforward,[on,off,off,off,off,on])"))
-                    # print_relative()
+                        f"move(moveforward,[{indicators}])"))
+                    print_relative_map()
                 elif option == '2':
                     move_agent(board, 'turnleft')
                     list(prolog.query(
-                        "move(turnleft,[on,off,off,off,off,on])"))
-                    print_map(board)
-                    # print_relative()
+                        f"move(turnleft,[{indicators}])"))
+                    print_relative_map()
                 elif option == '3':
                     move_agent(board, 'turnright')
                     list(prolog.query(
-                        "move(turnright,[on,off,off,off,off,on])"))
-                    print_map(board)
-                    # print_relative()
+                        f"move(turnright,[{indicators}])"))
+                    print_relative_map()
                 elif option == '4':
                     move_agent(board, 'pickup')
                     list(prolog.query(
-                        "move(pickup,[on,off,off,off,off,on])"))
-                    print_map(board)
-                    # print_relative()
+                        f"move(pickup,[{indicators}])"))
+                    print_relative_map()
+                elif option == '5':
+                    move_agent(board, 'shoot')
+                    list(prolog.query(
+                        f"move(shoot,[{indicators}])"))
+                    print_relative_map()
                 elif option == '0':
+                    X = agent['X']
+                    Y = agent['Y']
+                    set_visited_cell(board, X, Y)
+                    reset_map(board)
                     break
         elif option == '0':
             break
