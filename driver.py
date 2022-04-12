@@ -1,4 +1,5 @@
 from attr import has
+from paramiko import Agent
 from pyswip import Prolog
 
 # X row width
@@ -29,6 +30,7 @@ rw = w*2
 
 dead = False
 teleported = False
+gameend = False
 
 
 def change_symbol(board, X, Y, symbolno, symbol):
@@ -298,7 +300,7 @@ def teleport(board):
 
 
 def move_forward(board):
-    global dead, teleported
+    global dead, teleported, gameend
     direction = agent['direction']
     X = agent['X']
     Y = agent['Y']
@@ -310,7 +312,7 @@ def move_forward(board):
         if X == origin['X'] and Y1 == origin['Y'] and len(coins) == 0:
             set_visited_cell(board, X, Y)
             reset_map(board)
-            dead = True
+            gameend = True
         elif f'{X},{Y1}' in wampus:
             set_visited_cell(board, X, Y)
             reset_map(board)
@@ -330,7 +332,7 @@ def move_forward(board):
         if X1 == origin['X'] and Y == origin['Y'] and len(coins) == 0:
             set_visited_cell(board, X, Y)
             reset_map(board)
-            dead = True
+            gameend = True
         elif f'{X1},{Y}' in wampus:
             set_visited_cell(board, X, Y)
             reset_map(board)
@@ -350,7 +352,7 @@ def move_forward(board):
         if X1 == origin['X'] and Y == origin['Y'] and len(coins) == 0:
             set_visited_cell(board, X, Y)
             reset_map(board)
-            dead = True
+            gameend = True
         elif f'{X1},{Y}' in wampus:
             set_visited_cell(board, X, Y)
             reset_map(board)
@@ -370,7 +372,7 @@ def move_forward(board):
         if X == origin['X'] and Y1 == origin['Y'] and len(coins) == 0:
             set_visited_cell(board, X, Y)
             reset_map(board)
-            dead = True
+            gameend = True
         elif f'{X},{Y1}' in wampus:
             set_visited_cell(board, X, Y)
             reset_map(board)
@@ -426,7 +428,6 @@ def turn_right(board):
 def pickup(board):
     X = agent['X']
     Y = agent['Y']
-    coins.remove(f'{X},{Y}')
     change_symbol(board, X, Y, 7, ".")
 
 
@@ -742,7 +743,7 @@ def check_localisation():
 
 
 def main():
-    global dead, teleported
+    global dead, teleported, gameend
     board = generate_abs_map()
     rmap = generate_relative_map()
     print_abs_map(board)
@@ -753,7 +754,7 @@ def main():
         print("3. Test Case 3: Correctness of Agent's memory management in response to stepping though a Confundus Portal")
         print("4. Test Case 4: Correctness of Agent's exploration capabilities")
         print("5. Test Case 5: Correctness of the Agent's end-game reset in a manner similar to that of Confundus Portal reset.")
-        print("6. Free Roaming Mode")
+        print("6. Testing Mode")
         print("0. Exit")
         option = input()
         if option == '1':
@@ -867,15 +868,20 @@ def main():
             print(action_sequence)
             for action in action_sequence:
                 move_agent(board, action)
+                if action == 'pickup':
+                    X = agent['X']
+                    Y = agent['Y']
+                    coins.remove(f'{X},{Y}')
+
                 print_abs_map(board)
-                if dead:
+                if gameend:
                     list(prolog.query("reborn"))
                     visited.clear()
                     visited_map.clear()
                     rwalls.clear()
                     rwalls_map.clear()
                     rmap = generate_relative_map()
-                    dead = False
+                    gameend = False
                 else:
                     list(prolog.query(
                         f"move({action},{get_indicator(board)})"))

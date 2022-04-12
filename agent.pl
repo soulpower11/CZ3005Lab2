@@ -2,7 +2,7 @@
 :- (dynamic[confounded/0, stench/0, tingle/0, glitter/0, bump/0, scream/0]).
 :- (dynamic[hasarrow/0]).
 :- (dynamic[current/3]).
-:- (dynamic[explore/1]).
+:- (dynamic[tempcurrent/3]).
 :- retractall(current(_, _, _)).
 :- retractall(hasarrow).
 :- assertz(current(0, 0, rnorth)).
@@ -520,6 +520,30 @@ explore([H|T]) :-
         L\=0
     ->  explore(T)
     ;    !
+    ).
+
+getmovement :-
+    current(X, Y, D),
+    (   D=rnorth
+    ->  Y1 is Y+1,
+        not(confundus(X, Y1)),
+        not(wumpus(X, Y1)),
+        not(wall(X, Y1))
+    ;   D=rwest
+    ->  X1 is X-1,
+        not(confundus(X1, Y)),
+        not(wumpus(X1, Y)),
+        not(wall(X1, Y))
+    ;   D=reast
+    ->  X1 is X+1,
+        not(confundus(X1, Y)),
+        not(wumpus(X1, Y)),
+        not(wall(X1, Y))
+    ;   D=rsouth
+    ->  Y1 is Y-1,
+        not(confundus(X, Y1)),
+        not(wumpus(X, Y1)),
+        not(wall(X, Y1))
     ).
 
 checksafe :-
