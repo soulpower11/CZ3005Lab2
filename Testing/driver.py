@@ -65,7 +65,6 @@ def auto_explore(prolog: Prolog, w_map: Map):
 
     while path_exists:
         L = list(prolog.query("explore(L)"))
-        print(L[0]['L'])
         path_exists = handle_explore_result(prolog, w_map, L)
 
     return
@@ -76,10 +75,13 @@ def handle_explore_result(prolog: Prolog, w_map: Map, L: List[Dict[str, List[Ato
         print("[Driver] Nothing from explore(L) anymore...")
         return False
 
-    actions = L[0]['L']
+    actions = L
     for action in actions:
-        print(atoms_to_strings(action))
-        make_action(prolog, w_map, atoms_to_strings(action), print_map=True)
+        try:
+            print(action['L'][0].value)
+            make_action(prolog, w_map, action['L'][0].value, print_map=True)
+        except:
+            print()
 
     return True
 

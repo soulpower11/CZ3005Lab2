@@ -1,5 +1,3 @@
-from attr import has
-from paramiko import Agent
 from pyswip import Prolog
 
 # X row width
@@ -25,6 +23,10 @@ rwalls = []
 rwalls_map = []
 visited_map = []
 visited = []
+safe_map = []
+safe = []
+rcurrent = ''
+rcurrent_map = ''
 rh = h*2
 rw = w*2
 
@@ -145,13 +147,28 @@ def change_rsymbol(board, X, Y, symbolno, symbol):
             cell[2][2] = symbol
 
 
-def set_ragent_cell(board, X, Y, direction):
-    confounded = bool(list(prolog.query('confounded')))
-    stench = bool(list(prolog.query('stench')))
-    tingle = bool(list(prolog.query('tingle')))
-    glitter = bool(list(prolog.query('glitter')))
-    bump = bool(list(prolog.query('bump')))
-    scream = bool(list(prolog.query('scream')))
+def set_ragent_cell(absmap, board, X, Y, direction):
+    cell = absmap[agent['X']][agent['Y']]
+
+    confounded = False
+    stench = False
+    tingle = False
+    glitter = False
+    bump = False
+    scream = False
+
+    if cell[0][0] == '%':
+        confounded = True
+    if cell[1][0] == '=':
+        stench = True
+    if cell[2][0] == 'T':
+        tingle = True
+    if cell[0][2] == '*':
+        glitter = True
+    if cell[1][2] == 'B':
+        bump = True
+    if cell[2][2] == '@':
+        scream = True
 
     if confounded:
         change_rsymbol(board, X, Y, 1, "%")
@@ -189,6 +206,50 @@ def set_ragent_cell(board, X, Y, direction):
     elif direction == 'rsouth':
         change_rsymbol(board, X, Y, 5, "∨")
 
+# def set_ragent_cell(board, X, Y, direction):
+#     confounded = bool(list(prolog.query('confounded')))
+#     stench = bool(list(prolog.query('stench')))
+#     tingle = bool(list(prolog.query('tingle')))
+#     glitter = bool(list(prolog.query('glitter')))
+#     bump = bool(list(prolog.query('bump')))
+#     scream = bool(list(prolog.query('scream')))
+
+#     if confounded:
+#         change_rsymbol(board, X, Y, 1, "%")
+#     else:
+#         change_rsymbol(board, X, Y, 1, ".")
+#     if stench:
+#         change_rsymbol(board, X, Y, 2, "=")
+#     else:
+#         change_rsymbol(board, X, Y, 2, ".")
+#     if tingle:
+#         change_rsymbol(board, X, Y, 3, "T")
+#     else:
+#         change_rsymbol(board, X, Y, 3, ".")
+#     if glitter:
+#         change_rsymbol(board, X, Y, 7, "*")
+#     else:
+#         change_rsymbol(board, X, Y, 7, ".")
+#     if bump:
+#         change_rsymbol(board, X, Y, 8, "B")
+#     else:
+#         change_rsymbol(board, X, Y, 8, ".")
+#     if scream:
+#         change_rsymbol(board, X, Y, 9, "@")
+#     else:
+#         change_rsymbol(board, X, Y, 9, ".")
+
+    change_rsymbol(board, X, Y, 4, "-")
+    change_rsymbol(board, X, Y, 6, "-")
+    if direction == 'rnorth':
+        change_rsymbol(board, X, Y, 5, "∧")
+    elif direction == 'rwest':
+        change_rsymbol(board, X, Y, 5, "<")
+    elif direction == 'reast':
+        change_rsymbol(board, X, Y, 5, ">")
+    elif direction == 'rsouth':
+        change_rsymbol(board, X, Y, 5, "∨")
+
 
 def set_rwumpus_cell(board, X, Y):
     change_rsymbol(board, X, Y, 4, "-")
@@ -212,6 +273,15 @@ def set_rvisited_cell(board, X, Y):
     change_rsymbol(board, X, Y, 1, ".")
     change_rsymbol(board, X, Y, 4, " ")
     change_rsymbol(board, X, Y, 5, "S")
+    change_rsymbol(board, X, Y, 6, " ")
+    change_rsymbol(board, X, Y, 8, ".")
+    change_rsymbol(board, X, Y, 9, ".")
+
+
+def set_rsafe_cell(board, X, Y):
+    change_rsymbol(board, X, Y, 1, ".")
+    change_rsymbol(board, X, Y, 4, " ")
+    change_rsymbol(board, X, Y, 5, "s")
     change_rsymbol(board, X, Y, 6, " ")
     change_rsymbol(board, X, Y, 8, ".")
     change_rsymbol(board, X, Y, 9, ".")
@@ -579,21 +649,31 @@ def print_abs_map(board):
         print()
 
 
-def generate_relative_map():
+def generate_relative_map(absmap):
     # (0,0) == (7,6)
+    global rcurrent_map, rcurrent
     board = [[generate_cell() for Y in range(rh)] for X in range(rw)]
 
     for X in range(len(board)):
         for Y in range(len(board[X])):
             change_rsymbol(board, X, Y, 5, "?")
 
-    for soln in prolog.query("visited(X,Y)"):
-        if f'{soln["X"]},{soln["Y"]}' not in visited:
-            visited.append(f'{soln["X"]},{soln["Y"]}')
-            visited_map.append(f'{w + soln["X"]},{h + soln["Y"]}')
-        set_rvisited_cell(board, w + soln["X"], h + soln["Y"])
+    # for soln in prolog.query("visited(X,Y)"):
+    #     if f'{soln["X"]},{soln["Y"]}' not in visited:
+    #         visited.append(f'{soln["X"]},{soln["Y"]}')
+    #         visited_map.append(f'{w + soln["X"]},{h + soln["Y"]}')
+    #     set_rvisited_cell(board, w + soln["X"], h + soln["Y"])
 
     # print(visited)
+
+    for soln in prolog.query("safe(X,Y)"):
+        if f'{soln["X"]},{soln["Y"]}' not in safe:
+            safe.append(f'{soln["X"]},{soln["Y"]}')
+            safe_map.append(f'{w + soln["X"]},{h + soln["Y"]}')
+        set_rsafe_cell(board, w + soln["X"], h + soln["Y"])
+
+    rcurrent = '0,0'
+    rcurrent_map = f'{w},{h}'
 
     current = list(prolog.query("current(X,Y,D)"))[0]
     # print(current)
@@ -604,12 +684,20 @@ def generate_relative_map():
 
     # print(f'Agent is at {X},{Y} facing {direction}')
 
-    set_ragent_cell(board, w+X, h+Y, direction)
+    set_ragent_cell(absmap, board, w+X, h+Y, direction)
 
     return board
 
 
-def update_relative_map(board):
+def update_relative_map(absmap, board):
+    global rcurrent_map, rcurrent
+
+    for soln in prolog.query("safe(X,Y)"):
+        if f'{soln["X"]},{soln["Y"]}' not in safe:
+            safe.append(f'{soln["X"]},{soln["Y"]}')
+            safe_map.append(f'{w + soln["X"]},{h + soln["Y"]}')
+        set_rsafe_cell(board, w + soln["X"], h + soln["Y"])
+
     for soln in prolog.query("visited(X,Y)"):
         if f'{soln["X"]},{soln["Y"]}' not in visited:
             visited.append(f'{soln["X"]},{soln["Y"]}')
@@ -627,9 +715,19 @@ def update_relative_map(board):
 
     # print(f'Agent is at {X},{Y} facing {direction}')
 
-    set_ragent_cell(board, w+X, h+Y, direction)
+    rcurrent = f'{X},{Y}'
+    rcurrent_map = f'{w + X},{h + Y}'
 
-    bump = bool(list(prolog.query('bump')))
+    set_ragent_cell(absmap, board, w+X, h+Y, direction)
+
+    cell = absmap[agent['X']][agent['Y']]
+
+    bump = False
+
+    if cell[1][2] == 'B':
+        bump = True
+
+    # bump = bool(list(prolog.query('bump')))
 
     if bump:
         set_rwall_cell(board, X, Y, direction)
@@ -644,6 +742,7 @@ def update_relative_map(board):
 
 
 def print_relative_map(board):
+    global rcurrent_map, rcurrent
     line = [["" for Y in range(innerH)] for X in range(rh)]
 
     for X in range(len(board)):
@@ -656,7 +755,35 @@ def print_relative_map(board):
                             line[Y][innerY] += f" {cell[innerX][innerY]}  "
                         else:
                             line[Y][innerY] += f" {cell[innerX][innerY]}"
-            elif f'{X-1},{Y}' in visited_map or f'{X+1},{Y}' in visited_map or f'{X},{Y-1}' in visited_map or f'{X},{Y+1}' in visited_map:
+            # elif f'{X-1},{Y}' in visited_map or f'{X+1},{Y}' in visited_map or f'{X},{Y-1}' in visited_map or f'{X},{Y+1}' in visited_map:
+            #     for innerX in range(len(cell)):
+            #         for innerY in range(len(cell[innerX])):
+            #             if innerX == 2 and X != len(board)-1:
+            #                 line[Y][innerY] += f" {cell[innerX][innerY]}  "
+            #             else:
+            #                 line[Y][innerY] += f" {cell[innerX][innerY]}"
+            elif f'{X-1},{Y}' in visited_map or f'{X+1},{Y}' in visited_map or f'{X-1},{Y+1}' in visited_map or f'{X},{Y+1}' in visited_map or f'{X+1},{Y+1}' in visited_map or f'{X-1},{Y-1}' in visited_map or f'{X},{Y-1}' in visited_map or f'{X+1},{Y-1}' in visited_map:
+                for innerX in range(len(cell)):
+                    for innerY in range(len(cell[innerX])):
+                        if innerX == 2 and X != len(board)-1:
+                            line[Y][innerY] += f" {cell[innerX][innerY]}  "
+                        else:
+                            line[Y][innerY] += f" {cell[innerX][innerY]}"
+            elif f'{X},{Y}' == rcurrent_map:
+                for innerX in range(len(cell)):
+                    for innerY in range(len(cell[innerX])):
+                        if innerX == 2 and X != len(board)-1:
+                            line[Y][innerY] += f" {cell[innerX][innerY]}  "
+                        else:
+                            line[Y][innerY] += f" {cell[innerX][innerY]}"
+            # elif f'{X-1},{Y}' == rcurrent_map or f'{X+1},{Y}' == rcurrent_map or f'{X},{Y-1}' == rcurrent_map or f'{X},{Y+1}' == rcurrent_map:
+            #     for innerX in range(len(cell)):
+            #         for innerY in range(len(cell[innerX])):
+            #             if innerX == 2 and X != len(board)-1:
+            #                 line[Y][innerY] += f" {cell[innerX][innerY]}  "
+            #             else:
+            #                 line[Y][innerY] += f" {cell[innerX][innerY]}"
+            elif f'{X-1},{Y}' == rcurrent_map or f'{X+1},{Y}' == rcurrent_map or f'{X-1},{Y+1}' == rcurrent_map or f'{X},{Y+1}' == rcurrent_map or f'{X+1},{Y+1}' == rcurrent_map or f'{X-1},{Y-1}' == rcurrent_map or f'{X},{Y-1}' == rcurrent_map or f'{X+1},{Y-1}' == rcurrent_map:
                 for innerX in range(len(cell)):
                     for innerY in range(len(cell[innerX])):
                         if innerX == 2 and X != len(board)-1:
@@ -745,7 +872,7 @@ def check_localisation():
 def main():
     global dead, teleported, gameend
     board = generate_abs_map()
-    rmap = generate_relative_map()
+    rmap = generate_relative_map(board)
     print_abs_map(board)
     print_relative_map(rmap)
     while True:
@@ -783,7 +910,7 @@ def main():
                 print_abs_map(board)
                 list(prolog.query(
                     f"move({action},{get_indicator(board)})"))
-                update_relative_map(rmap)
+                update_relative_map(board, rmap)
                 print_relative_map(rmap)
                 check_localisation()
             X = agent['X']
@@ -795,7 +922,7 @@ def main():
             visited_map.clear()
             rwalls.clear()
             rwalls_map.clear()
-            rmap = generate_relative_map()
+            rmap = generate_relative_map(board)
         elif option == '2':
             # Action Sequence ['turnright', 'moveforward', 'turnleft', 'moveforward', 'pickup', 'moveforward', 'moveforward', 'moveforward']
             list(prolog.query("reborn"))
@@ -809,7 +936,7 @@ def main():
                 print_abs_map(board)
                 list(prolog.query(
                     f"move({action},{get_indicator(board)})"))
-                update_relative_map(rmap)
+                update_relative_map(board, rmap)
                 print_relative_map(rmap)
                 check_localisation()
             X = agent['X']
@@ -821,7 +948,7 @@ def main():
             visited_map.clear()
             rwalls.clear()
             rwalls_map.clear()
-            rmap = generate_relative_map()
+            rmap = generate_relative_map(board)
         elif option == '3':
             # Action Sequence ['moveforward', 'turnright', 'moveforward', 'turnleft', 'moveforward', 'moveforward', 'turnright', 'moveforward', 'turnright', 'moveforward']
             list(prolog.query("reborn"))
@@ -845,7 +972,7 @@ def main():
                 else:
                     list(prolog.query(
                         f"move({action},{get_indicator(board)})"))
-                update_relative_map(rmap)
+                update_relative_map(board, rmap)
                 print_relative_map(rmap)
                 check_localisation()
             X = agent['X']
@@ -857,7 +984,50 @@ def main():
             visited_map.clear()
             rwalls.clear()
             rwalls_map.clear()
-            rmap = generate_relative_map()
+            rmap = generate_relative_map(board)
+        elif option == '4':
+            # actions = []
+            # for soln in prolog.query("explore(L)"):
+            #     actions = [action.value for action in soln['L']]
+            #     print(actions)
+            #     if len(actions) == 0:
+            #         break
+
+            while True:
+                actions = []
+                for soln in prolog.query("explore(L)"):
+                    actions = [action.value for action in soln['L']]
+                    print(actions)
+                    if len(actions) == 0:
+                        break
+
+                for action in actions:
+                    move_agent(board, action)
+                    print_abs_map(board)
+                    if dead:
+                        list(prolog.query("reborn"))
+                        visited.clear()
+                        visited_map.clear()
+                        rwalls.clear()
+                        rwalls_map.clear()
+                        rmap = generate_relative_map(board)
+                        dead = False
+                    if teleported:
+                        list(prolog.query(
+                            "reposition([on,off,off,off,off,off])"))
+                        rmap = relative_teleport(rmap)
+                        visited.clear()
+                        visited_map.clear()
+                        rwalls.clear()
+                        rwalls_map.clear()
+                        teleported = False
+                    else:
+                        list(prolog.query(
+                            f"move({action},{get_indicator(board)})"))
+                    update_relative_map(board, rmap)
+                    print_relative_map(rmap)
+                    check_localisation()
+
         elif option == '5':
             # Action Sequence ['moveforward', 'turnright', 'moveforward','pickup', 'turnright', 'moveforward', 'turnright', 'moveforward']
             list(prolog.query("reborn"))
@@ -880,12 +1050,12 @@ def main():
                     visited_map.clear()
                     rwalls.clear()
                     rwalls_map.clear()
-                    rmap = generate_relative_map()
+                    rmap = generate_relative_map(board)
                     gameend = False
                 else:
                     list(prolog.query(
                         f"move({action},{get_indicator(board)})"))
-                update_relative_map(rmap)
+                update_relative_map(board, rmap)
                 print_relative_map(rmap)
                 check_localisation()
             X = agent['X']
@@ -897,7 +1067,7 @@ def main():
             visited_map.clear()
             rwalls.clear()
             rwalls_map.clear()
-            rmap = generate_relative_map()
+            rmap = generate_relative_map(board)
         elif option == '6':
             list(prolog.query("reborn"))
             # list(prolog.query("reposition([on,off,off,off,off,off])"))
@@ -922,7 +1092,7 @@ def main():
                         visited_map.clear()
                         rwalls.clear()
                         rwalls_map.clear()
-                        rmap = generate_relative_map()
+                        rmap = generate_relative_map(board)
                         dead = False
                     elif teleported:
                         list(prolog.query(
@@ -936,7 +1106,7 @@ def main():
                     else:
                         list(prolog.query(
                             f"move(moveforward,{get_indicator(board)})"))
-                    update_relative_map(rmap)
+                    update_relative_map(board, rmap)
                     print_relative_map(rmap)
                     check_localisation()
                 elif option == '2':
@@ -944,7 +1114,7 @@ def main():
                     print_abs_map(board)
                     list(prolog.query(
                         f"move(turnleft,{get_indicator(board)})"))
-                    update_relative_map(rmap)
+                    update_relative_map(board, rmap)
                     print_relative_map(rmap)
                     check_localisation()
                 elif option == '3':
@@ -952,7 +1122,7 @@ def main():
                     print_abs_map(board)
                     list(prolog.query(
                         f"move(turnright,{get_indicator(board)})"))
-                    update_relative_map(rmap)
+                    update_relative_map(board, rmap)
                     print_relative_map(rmap)
                     check_localisation()
                 elif option == '4':
@@ -960,7 +1130,7 @@ def main():
                     print_abs_map(board)
                     list(prolog.query(
                         f"move(pickup,{get_indicator(board)})"))
-                    update_relative_map(rmap)
+                    update_relative_map(board, rmap)
                     print_relative_map(rmap)
                     check_localisation()
                 elif option == '5':
@@ -968,7 +1138,7 @@ def main():
                     print_abs_map(board)
                     list(prolog.query(
                         f"move(shoot,{get_indicator(board)})"))
-                    update_relative_map(rmap)
+                    update_relative_map(board, rmap)
                     print_relative_map(rmap)
                     check_localisation()
                 elif option == '0':
@@ -981,7 +1151,7 @@ def main():
                     visited_map.clear()
                     rwalls.clear()
                     rwalls_map.clear()
-                    rmap = generate_relative_map()
+                    rmap = generate_relative_map(board)
                     break
         elif option == '0':
             break

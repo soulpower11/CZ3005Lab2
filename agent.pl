@@ -7,7 +7,7 @@
 :- retractall(hasarrow).
 :- assertz(current(0, 0, rnorth)).
 :- assertz(hasarrow).
-:- assertz(visited(0, 0)).
+% :- assertz(visited(0, 0)).
 :- assertz(safe(0, 0)).
 :- assertz(confounded).
 
@@ -16,9 +16,49 @@ reborn :-
     retractall(hasarrow),
     assertz(hasarrow).
 
-test :-
-    assertz(explore([moveforward])).
+same([], []).
 
+same([H1|R1], [H2|R2]) :-
+    H1=H2,
+    same(R1, R2).
+
+addtosafelist(X) :-
+    nb_getval(safelist, L),
+    append(L, X, NL),
+    nb_setval(safelist, NL).
+
+addtovisitedlist(X) :-
+    nb_getval(visitedlist, L),
+    append(L, X, NL),
+    nb_setval(visitedlist, NL).
+
+checkunvisitedsafecell :-
+    (   nb_setval(safelist, []),
+        nb_setval(visitedlist, []),
+        nb_setval(unvisitedlist, []),
+        forall(safe(X, Y),
+               addtosafelist([(X, Y)])),
+        forall(visited(X, Y),
+               addtovisitedlist([(X, Y)])),
+        nb_getval(safelist, SL),
+        nb_getval(visitedlist, VL),
+        not(same(SL, VL))
+    ->  nb_getval(safelist, SL),
+        nb_getval(visitedlist, VL),
+        subtract(SL, VL, L),
+        nb_setval(unvisitedlist, L)
+    ).
+
+test :-
+    checkunvisitedsafecell,
+    nb_getval(unvisitedlist, L),
+    write(L),
+    test2(L).
+
+test2([H|_]) :-
+    current(X, Y, _),
+    H=(X, Y).
+    
 move(A) :-
     (   A=shoot
     ->  shoot
@@ -103,13 +143,31 @@ removeunsafe(X, Y) :-
     ;    !
     ).
 
-addsafe(X, Y) :-
-    (   not(visited(X, Y))
-    ->  assertz(visited(X, Y))
+removewrongsafe(X, Y) :-
+    (   safe(X, Y)
+    ->  retract(safe(X, Y))
     ;    !
-    ),
+    ).
+
+
+% addsafe(X, Y) :-
+%     (   not(visited(X, Y))
+%     ->  assertz(visited(X, Y))
+%     ;    !
+%     ),
+%     (   not(safe(X, Y))
+%     ->  assertz(safe(X, Y))
+%     ;    !
+%     ).
+addsafe(X, Y) :-
     (   not(safe(X, Y))
     ->  assertz(safe(X, Y))
+    ;    !
+    ).
+
+addvisited(X, Y) :-
+    (   not(visited(X, Y))
+    ->  assertz(visited(X, Y))
     ;    !
     ).
 
@@ -120,11 +178,13 @@ forward :-
         (   bump
         ->  (   not(wall(X, Y1))
             ->  assertz(wall(X, Y1)),
+                removewrongsafe(X, Y1),
                 removeunsafe(X, Y1)
             ;    !
             )
         ;   retractall(current(_, _, _)),
             addsafe(X, Y1),
+            addvisited(X, Y),
             removeunsafe(X, Y1),
             assertz(current(X, Y1, D))
         )
@@ -133,11 +193,13 @@ forward :-
         (   bump
         ->  (   not(wall(X1, Y))
             ->  assertz(wall(X1, Y)),
+                removewrongsafe(X1, Y),
                 removeunsafe(X1, Y)
             ;    !
             )
         ;   retractall(current(_, _, _)),
             addsafe(X1, Y),
+            addvisited(X, Y),
             removeunsafe(X1, Y),
             assertz(current(X1, Y, D))
         )
@@ -146,11 +208,13 @@ forward :-
         (   bump
         ->  (   not(wall(X1, Y))
             ->  assertz(wall(X1, Y)),
+                removewrongsafe(X1, Y),
                 removeunsafe(X1, Y)
             ;    !
             )
         ;   retractall(current(_, _, _)),
             addsafe(X1, Y),
+            addvisited(X, Y),
             removeunsafe(X1, Y),
             assertz(current(X1, Y, D))
         )
@@ -159,11 +223,13 @@ forward :-
         (   bump
         ->  (   not(wall(X, Y1))
             ->  assertz(wall(X, Y1)),
+                removewrongsafe(X, Y1),
                 removeunsafe(X, Y1)
             ;    !
             )
         ;   retractall(current(_, _, _)),
             addsafe(X, Y1),
+            addvisited(X, Y),
             removeunsafe(X, Y1),
             assertz(current(X, Y1, D))
         )
@@ -221,20 +287,52 @@ confounded(A) :-
         )
     ).
 
+addwumpus :-
+    current(X, Y, _),
+    X1 is X+1,
+    X2 is X-1,
+    Y1 is Y+1,
+    Y2 is Y-1,
+    (   not(wall(X1, Y)),
+        not(visited(X1, Y))
+    ->  addwumpus(X1, Y)
+    ;    !
+    ),
+    (   not(wall(X2, Y)),
+        not(visited(X2, Y))
+    ->  addwumpus(X2, Y)
+    ;    !
+    ),
+    (   not(wall(X, Y1)),
+        not(visited(X, Y1))
+    ->  addwumpus(X, Y1)
+    ;    !
+    ),
+    (   not(wall(X, Y2)),
+        not(visited(X, Y2))
+    ->  addwumpus(X, Y2)
+    ;    !
+    ).
+
 addwumpus(X, Y) :-
-    (   (   not(wall(X, Y))
-        ->  (   not(visited(X, Y))
-            ->  (   not(wumpus(X, Y))
-                ->  assertz(wumpus(X, Y))
-                ;    !
-                )
-            )
-        ;    !
-        )
+    (   not(wumpus(X, Y))
+    ->  assertz(wumpus(X, Y))
     ;    !
     ).
 
 
+% addwumpus(X, Y) :-
+%     (   (   not(wall(X, Y))
+%         ->  (   not(visited(X, Y))
+%             ->  (   not(wumpus(X, Y))
+%                 ->  assertz(wumpus(X, Y))
+%                 ;    !
+%                 )
+%             )
+%         ;    !
+%         )
+%     ;    !
+%     ).
 addstench(X, Y) :-
     (   not(stench(X, Y))
     ->  assertz(stench(X, Y))
@@ -243,25 +341,10 @@ addstench(X, Y) :-
 
 % if stench the cell infront might have wumpus
 stench(A) :-
-    (   A=on
-    ->  current(X, Y, D),
-        (   D=rnorth
-        ->  Y1 is Y+1,
-            addwumpus(X, Y1),
-            addstench(X, Y)
-        ;   D=rwest
-        ->  X1 is X-1,
-            addwumpus(X1, Y),
-            addstench(X, Y)
-        ;   D=reast
-        ->  X1 is X+1,
-            addwumpus(X1, Y),
-            addstench(X, Y)
-        ;   D=rsouth
-        ->  Y1 is Y-1,
-            addwumpus(X, Y1),
-            addstench(X, Y)
-        ),
+    (   A=on,
+        current(X, Y, _),
+        addwumpus,
+        addstench(X, Y),
         (   not(stench)
         ->  assertz(stench)
         ;    !
@@ -272,6 +355,37 @@ stench(A) :-
         ;    !
         )
     ).
+
+% stench(A) :-
+%     (   A=on
+%     ->  current(X, Y, D),
+%         (   D=rnorth
+%         ->  Y1 is Y+1,
+%             addwumpus(X, Y1),
+%             addstench(X, Y)
+%         ;   D=rwest
+%         ->  X1 is X-1,
+%             addwumpus(X1, Y),
+%             addstench(X, Y)
+%         ;   D=reast
+%         ->  X1 is X+1,
+%             addwumpus(X1, Y),
+%             addstench(X, Y)
+%         ;   D=rsouth
+%         ->  Y1 is Y-1,
+%             addwumpus(X, Y1),
+%             addstench(X, Y)
+%         ),
+%         (   not(stench)
+%         ->  assertz(stench)
+%         ;    !
+%         )
+%     ;   A=off
+%     ->  (   stench
+%         ->  retract(stench)
+%         ;    !
+%         )
+%     ).
 
 % stench(A) :-
 %     (   A=on
@@ -313,40 +427,56 @@ addtingle(X, Y) :-
     ;    !
     ).
 
-addconfundus(X, Y) :-
-    (   (   not(wall(X, Y))
-        ->  (   not(visited(X, Y))
-            ->  (   not(confundus(X, Y))
-                ->  assertz(confundus(X, Y))
-                ;    !
-                )
-            )
-        ;    !
-        )
+% addconfundus(X, Y) :-
+%     (   (   not(wall(X, Y))
+%         ->  (   not(visited(X, Y))
+%             ->  (   not(confundus(X, Y))
+%                 ->  assertz(confundus(X, Y))
+%                 ;    !
+%                 )
+%             )
+%         ;    !
+%         )
+%     ;    !
+%     ).
+addconfundus :-
+    current(X, Y, _),
+    X1 is X+1,
+    X2 is X-1,
+    Y1 is Y+1,
+    Y2 is Y-1,
+    (   not(wall(X1, Y)),
+        not(visited(X1, Y))
+    ->  addconfundus(X1, Y)
+    ;    !
+    ),
+    (   not(wall(X2, Y)),
+        not(visited(X2, Y))
+    ->  addconfundus(X2, Y)
+    ;    !
+    ),
+    (   not(wall(X, Y1)),
+        not(visited(X, Y1))
+    ->  addconfundus(X, Y1)
+    ;    !
+    ),
+    (   not(wall(X, Y2)),
+        not(visited(X, Y2))
+    ->  addconfundus(X, Y2)
     ;    !
     ).
 
+addconfundus(X, Y) :-
+    (   not(confundus(X, Y))
+    ->  assertz(confundus(X, Y))
+    ;    !
+    ).
 
 tingle(A) :-
     (   A=on
-    ->  current(X, Y, D),
-        (   D=rnorth
-        ->  Y1 is Y+1,
-            addconfundus(X, Y1),
-            addtingle(X, Y)
-        ;   D=rwest
-        ->  X1 is X-1,
-            addconfundus(X1, Y),
-            addtingle(X, Y)
-        ;   D=reast
-        ->  X1 is X+1,
-            addconfundus(X1, Y),
-            addtingle(X, Y)
-        ;   D=rsouth
-        ->  Y1 is Y-1,
-            addconfundus(X, Y1),
-            addtingle(X, Y)
-        ),
+    ->  current(X, Y, _),
+        addconfundus,
+        addtingle(X, Y),
         (   not(tingle)
         ->  assertz(tingle)
         ;    !
@@ -357,6 +487,37 @@ tingle(A) :-
         ;    !
         )
     ).
+
+% tingle(A) :-
+%     (   A=on
+%     ->  current(X, Y, D),
+%         (   D=rnorth
+%         ->  Y1 is Y+1,
+%             addconfundus(X, Y1),
+%             addtingle(X, Y)
+%         ;   D=rwest
+%         ->  X1 is X-1,
+%             addconfundus(X1, Y),
+%             addtingle(X, Y)
+%         ;   D=reast
+%         ->  X1 is X+1,
+%             addconfundus(X1, Y),
+%             addtingle(X, Y)
+%         ;   D=rsouth
+%         ->  Y1 is Y-1,
+%             addconfundus(X, Y1),
+%             addtingle(X, Y)
+%         ),
+%         (   not(tingle)
+%         ->  assertz(tingle)
+%         ;    !
+%         )
+%     ;   A=off
+%     ->  (   tingle
+%         ->  retract(tingle)
+%         ;    !
+%         )
+%     ).
 
 % tingle(A) :-
 %     (   A=on
@@ -465,6 +626,36 @@ scream(A) :-
         )
     ).
 
+checksurroundsafe :-
+    (   current(X, Y, _),
+        X1 is X+1,
+        X2 is X-1,
+        Y1 is Y+1,
+        Y2 is Y-1,
+        not(tingle),
+        not(stench)
+    ->  (   not(wall(X1, Y))
+        ->  addsafe(X1, Y)
+        ;    !
+        ),
+        (   not(wall(X2, Y))
+        ->  addsafe(X2, Y)
+        ;    !
+        ),
+        (   not(wall(X, Y1))
+        ->  addsafe(X, Y1)
+        ;    !
+        ),
+        (   not(wall(X, Y2))
+        ->  addsafe(X, Y2)
+        ;    !
+        )
+    ;    !
+    ).
+    
+    
+
+
 reposition([LA, LB, LC, LD, LE, LF]) :-
     retractall(visited(_, _)),
     retractall(wumpus(_, _)),
@@ -476,7 +667,7 @@ reposition([LA, LB, LC, LD, LE, LF]) :-
     retractall(wall(_, _)),
     retractall(current(_, _, _)),
     assertz(current(0, 0, rnorth)),
-    assertz(visited(0, 0)),
+    % assertz(visited(0, 0)),
     assertz(safe(0, 0)),
     confounded(LA),
     stench(LB),
@@ -500,51 +691,58 @@ move(A, [LA, LB, LC, LD, LE, LF]) :-
     confounded(LA),
     stench(LB),
     tingle(LC),
-    glitter(LD).
+    glitter(LD),
+    checksurroundsafe.
 
 explore(L) :-
-    (   checksafe
-    ->  (   checkvisited
-        ->  append([], [turnleft], L)
-        ;   append([], [moveforward], L)
-        )
-    ;   append([], [turnleft], L)
-    ).
+    nb_setval(moves, []),
+    movelist,
+    nb_getval(moves, L).
 
-explore([H|T]) :-
-    (   write(H),
-        H=moveforward
-    ->  checksafe
-    ;    !,
-        length(T, L),
-        L\=0
-    ->  explore(T)
-    ;    !
-    ).
-
-getmovement :-
+% explore([H|T]) :-
+%     (   write(H),
+%         H=moveforward
+%     ->  checksafe
+%     ;    !,
+%         length(T, L),
+%         L\=0
+%     ->  explore(T)
+%     ;    !
+%     ).
+movelist :-
     current(X, Y, D),
     (   D=rnorth
     ->  Y1 is Y+1,
-        not(confundus(X, Y1)),
-        not(wumpus(X, Y1)),
-        not(wall(X, Y1))
+        getmovement(X, Y1)
     ;   D=rwest
     ->  X1 is X-1,
-        not(confundus(X1, Y)),
-        not(wumpus(X1, Y)),
-        not(wall(X1, Y))
+        getmovement(X1, Y)
     ;   D=reast
     ->  X1 is X+1,
-        not(confundus(X1, Y)),
-        not(wumpus(X1, Y)),
-        not(wall(X1, Y))
+        getmovement(X1, Y)
     ;   D=rsouth
     ->  Y1 is Y-1,
-        not(confundus(X, Y1)),
-        not(wumpus(X, Y1)),
-        not(wall(X, Y1))
+        getmovement(X, Y1)
     ).
+
+getmovement(X, Y) :-
+    nb_getval(moves, L),
+    % append(H, T, L),
+    (   (   confundus(X, Y)
+        ;   wumpus(X, Y)
+        ;   wall(X, Y)
+        )
+    ->  append(L,
+               [turnright, turnright, moveforward, turnright, forward, turnleft],
+               NL)
+    ;   not(visited(X, Y))
+    ->  append(L, [moveforward], NL)
+    ;   (   visited(X, Y)
+        ;   safe(X, Y)
+        )
+    ->  append(L, [turnright, moveforward], NL)
+    ),
+    nb_setval(moves, NL).
 
 checksafe :-
     current(X, Y, D),
