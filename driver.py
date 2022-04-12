@@ -340,7 +340,7 @@ def move_forward(board):
             set_visited_cell(board, X, Y)
             teleport(board)
             teleported = True
-        if f'{X1},{Y}' in walls:
+        elif f'{X1},{Y}' in walls:
             change_symbol(board, X, Y, 8, "B")
         else:
             set_visited_cell(board, X, Y)
@@ -880,15 +880,16 @@ def main():
                 update_relative_map(rmap)
                 print_relative_map(rmap)
                 check_localisation()
-                X = agent['X']
-                Y = agent['Y']
-                set_visited_cell(board, X, Y)
-                reset_map(board)
-                visited.clear()
-                visited_map.clear()
-                rwalls.clear()
-                rwalls_map.clear()
-                rmap = generate_relative_map()
+            X = agent['X']
+            Y = agent['Y']
+            set_visited_cell(board, X, Y)
+            reset_map(board)
+            list(prolog.query("reborn"))
+            visited.clear()
+            visited_map.clear()
+            rwalls.clear()
+            rwalls_map.clear()
+            rmap = generate_relative_map()
         elif option == '4':
             list(prolog.query("reborn"))
             # list(prolog.query("reposition([on,off,off,off,off,off])"))
