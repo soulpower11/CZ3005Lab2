@@ -376,6 +376,7 @@ def move_forward(board):
     Y = agent['Y']
 
     # print(f'Actual Agent Location ({X},{Y}) facing {direction}')
+    change_symbol(board, X, Y, 1, ".")
 
     if direction == 'north':
         Y1 = Y+1
@@ -805,7 +806,7 @@ def print_relative_map(board):
 
 
 def relative_teleport(board):
-
+    global rcurrent_map, rcurrent
     for coor in rwalls_map:
         X = int(coor.split(',')[0])
         Y = int(coor.split(',')[1])
@@ -817,8 +818,26 @@ def relative_teleport(board):
         change_rsymbol(board, X, Y, 1, '.')
         change_rsymbol(board, X, Y, 2, '.')
         change_rsymbol(board, X, Y, 3, '.')
+
         change_rsymbol(board, X, Y, 8, '.')
         change_rsymbol(board, X, Y, 9, '.')
+
+    for coor in safe_map:
+        X = int(coor.split(',')[0])
+        Y = int(coor.split(',')[1])
+        change_rsymbol(board, X, Y, 1, '.')
+        change_rsymbol(board, X, Y, 2, '.')
+        change_rsymbol(board, X, Y, 3, '.')
+        change_rsymbol(board, X, Y, 8, '.')
+        change_rsymbol(board, X, Y, 9, '.')
+
+    X = int(rcurrent_map.split(',')[0])
+    Y = int(rcurrent_map.split(',')[1])
+    change_rsymbol(board, X, Y, 1, '.')
+    change_rsymbol(board, X, Y, 2, '.')
+    change_rsymbol(board, X, Y, 3, '.')
+    change_rsymbol(board, X, Y, 8, '.')
+    change_rsymbol(board, X, Y, 9, '.')
 
     for X in range(len(board)):
         for Y in range(len(board[X])):
@@ -870,7 +889,7 @@ def check_localisation():
 
 
 def main():
-    global dead, teleported, gameend
+    global dead, teleported, gameend, rcurrent, rcurrent_map
     board = generate_abs_map()
     rmap = generate_relative_map(board)
     print_abs_map(board)
@@ -922,6 +941,10 @@ def main():
             visited_map.clear()
             rwalls.clear()
             rwalls_map.clear()
+            rcurrent = ''
+            rcurrent_map = ''
+            safe_map.clear()
+            safe.clear()
             rmap = generate_relative_map(board)
         elif option == '2':
             # Action Sequence ['turnright', 'moveforward', 'turnleft', 'moveforward', 'pickup', 'moveforward', 'moveforward', 'moveforward']
@@ -948,6 +971,10 @@ def main():
             visited_map.clear()
             rwalls.clear()
             rwalls_map.clear()
+            rcurrent = ''
+            rcurrent_map = ''
+            safe_map.clear()
+            safe.clear()
             rmap = generate_relative_map(board)
         elif option == '3':
             # Action Sequence ['moveforward', 'turnright', 'moveforward', 'turnleft', 'moveforward', 'moveforward', 'turnright', 'moveforward', 'turnright', 'moveforward']
@@ -963,11 +990,16 @@ def main():
                 if teleported:
                     list(prolog.query(
                         "reposition([on,off,off,off,off,off])"))
-                    rmap = relative_teleport(rmap)
+                    rmap = generate_relative_map(board)
+                    # rmap = relative_teleport(rmap)
                     visited.clear()
                     visited_map.clear()
                     rwalls.clear()
                     rwalls_map.clear()
+                    rcurrent = ''
+                    rcurrent_map = ''
+                    safe_map.clear()
+                    safe.clear()
                     teleported = False
                 else:
                     list(prolog.query(
@@ -1010,16 +1042,25 @@ def main():
                         visited_map.clear()
                         rwalls.clear()
                         rwalls_map.clear()
+                        rcurrent = ''
+                        rcurrent_map = ''
+                        safe_map.clear()
+                        safe.clear()
                         rmap = generate_relative_map(board)
                         dead = False
                     if teleported:
                         list(prolog.query(
                             "reposition([on,off,off,off,off,off])"))
-                        rmap = relative_teleport(rmap)
+                        rmap = generate_relative_map(board)
+                        # rmap = relative_teleport(rmap)
                         visited.clear()
                         visited_map.clear()
                         rwalls.clear()
                         rwalls_map.clear()
+                        rcurrent = ''
+                        rcurrent_map = ''
+                        safe_map.clear()
+                        safe.clear()
                         teleported = False
                     else:
                         list(prolog.query(
@@ -1050,6 +1091,10 @@ def main():
                     visited_map.clear()
                     rwalls.clear()
                     rwalls_map.clear()
+                    rcurrent = ''
+                    rcurrent_map = ''
+                    safe_map.clear()
+                    safe.clear()
                     rmap = generate_relative_map(board)
                     gameend = False
                 else:
@@ -1067,6 +1112,10 @@ def main():
             visited_map.clear()
             rwalls.clear()
             rwalls_map.clear()
+            rcurrent = ''
+            rcurrent_map = ''
+            safe_map.clear()
+            safe.clear()
             rmap = generate_relative_map(board)
         elif option == '6':
             list(prolog.query("reborn"))
@@ -1092,16 +1141,25 @@ def main():
                         visited_map.clear()
                         rwalls.clear()
                         rwalls_map.clear()
+                        rcurrent = ''
+                        rcurrent_map = ''
+                        safe_map.clear()
+                        safe.clear()
                         rmap = generate_relative_map(board)
                         dead = False
                     elif teleported:
                         list(prolog.query(
                             "reposition([on,off,off,off,off,off])"))
-                        rmap = relative_teleport(rmap)
+                        rmap = generate_relative_map(board)
+                        # rmap = relative_teleport(rmap)
                         visited.clear()
                         visited_map.clear()
                         rwalls.clear()
                         rwalls_map.clear()
+                        rcurrent = ''
+                        rcurrent_map = ''
+                        safe_map.clear()
+                        safe.clear()
                         teleported = False
                     else:
                         list(prolog.query(
@@ -1151,6 +1209,10 @@ def main():
                     visited_map.clear()
                     rwalls.clear()
                     rwalls_map.clear()
+                    rcurrent = ''
+                    rcurrent_map = ''
+                    safe_map.clear()
+                    safe.clear()
                     rmap = generate_relative_map(board)
                     break
         elif option == '0':
