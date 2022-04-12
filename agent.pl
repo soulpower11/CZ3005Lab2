@@ -2,6 +2,7 @@
 :- (dynamic[confounded/0, stench/0, tingle/0, glitter/0, bump/0, scream/0]).
 :- (dynamic[hasarrow/0]).
 :- (dynamic[current/3]).
+:- (dynamic[explore/1]).
 :- retractall(current(_, _, _)).
 :- retractall(hasarrow).
 :- assertz(current(0, 0, rnorth)).
@@ -221,11 +222,16 @@ confounded(A) :-
     ).
 
 addwumpus(X, Y) :-
-    (   not(wall(X, Y))
-    ->  (   not(wumpus(X, Y))
-        ->  assertz(wumpus(X, Y))
+    (   (   not(wall(X, Y))
+        ->  (   not(visited(X, Y))
+            ->  (   not(wumpus(X, Y))
+                ->  assertz(wumpus(X, Y))
+                ;    !
+                )
+            )
         ;    !
         )
+    ;    !
     ).
 
 
@@ -308,12 +314,18 @@ addtingle(X, Y) :-
     ).
 
 addconfundus(X, Y) :-
-    (   not(wall(X, Y))
-    ->  (   not(confundus(X, Y))
-        ->  assertz(confundus(X, Y))
+    (   (   not(wall(X, Y))
+        ->  (   not(visited(X, Y))
+            ->  (   not(confundus(X, Y))
+                ->  assertz(confundus(X, Y))
+                ;    !
+                )
+            )
         ;    !
         )
+    ;    !
     ).
+
 
 tingle(A) :-
     (   A=on
@@ -490,6 +502,15 @@ move(A, [LA, LB, LC, LD, LE, LF]) :-
     tingle(LC),
     glitter(LD).
 
+explore(L) :-
+    (   checksafe
+    ->  (   checkvisited
+        ->  append([], [turnleft], L)
+        ;   append([], [moveforward], L)
+        )
+    ;   append([], [turnleft], L)
+    ).
+
 explore([H|T]) :-
     (   write(H),
         H=moveforward
@@ -505,14 +526,38 @@ checksafe :-
     current(X, Y, D),
     (   D=rnorth
     ->  Y1 is Y+1,
-        safe(X, Y1)
+        not(confundus(X, Y1)),
+        not(wumpus(X, Y1)),
+        not(wall(X, Y1))
     ;   D=rwest
     ->  X1 is X-1,
-        safe(X1, Y)
+        not(confundus(X1, Y)),
+        not(wumpus(X1, Y)),
+        not(wall(X1, Y))
     ;   D=reast
     ->  X1 is X+1,
-        safe(X1, Y)
+        not(confundus(X1, Y)),
+        not(wumpus(X1, Y)),
+        not(wall(X1, Y))
     ;   D=rsouth
     ->  Y1 is Y-1,
-        safe(X, Y1)
+        not(confundus(X, Y1)),
+        not(wumpus(X, Y1)),
+        not(wall(X, Y1))
+    ).
+
+checkvisited :-
+    current(X, Y, D),
+    (   D=rnorth
+    ->  Y1 is Y+1,
+        visited(X, Y1)
+    ;   D=rwest
+    ->  X1 is X-1,
+        visited(X1, Y)
+    ;   D=reast
+    ->  X1 is X+1,
+        visited(X1, Y)
+    ;   D=rsouth
+    ->  Y1 is Y-1,
+        visited(X, Y1)
     ).

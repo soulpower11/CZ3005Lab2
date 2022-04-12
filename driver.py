@@ -17,6 +17,8 @@ walls = []
 wampus = []
 portals = []
 agent = {}
+origin = {}
+coins = []
 
 rwalls = []
 rwalls_map = []
@@ -253,7 +255,10 @@ def generate_abs_map():
     set_agent_cell(board, 2, 1, 'north')
     change_symbol(board, 2, 1, 1, "%")
     agent.update({'direction': 'north', 'X': 2, 'Y': 1})
+    origin.update({'X': 2, 'Y': 1})
+    coins.clear()
     change_symbol(board, 3, 2, 7, "*")
+    coins.append('3,2')
     set_wumpus_cell(board, 2, 4)
     set_portal_cell(board, 4, 3)
     set_portal_cell(board, 4, 2)
@@ -273,7 +278,9 @@ def reset_map(board):
     agent['direction'] = 'north'
     agent['X'] = 2
     agent['Y'] = 1
+    coins.clear()
     change_symbol(board, 3, 2, 7, "*")
+    coins.append('3,2')
     set_wumpus_cell(board, 2, 4)
 
 
@@ -296,11 +303,15 @@ def move_forward(board):
     X = agent['X']
     Y = agent['Y']
 
-    print(f'Actual Agent Location ({X},{Y}) facing {direction}')
+    # print(f'Actual Agent Location ({X},{Y}) facing {direction}')
 
     if direction == 'north':
         Y1 = Y+1
-        if f'{X},{Y1}' in wampus:
+        if X == origin['X'] and Y1 == origin['Y'] and len(coins) == 0:
+            set_visited_cell(board, X, Y)
+            reset_map(board)
+            dead = True
+        elif f'{X},{Y1}' in wampus:
             set_visited_cell(board, X, Y)
             reset_map(board)
             dead = True
@@ -316,7 +327,11 @@ def move_forward(board):
             agent['Y'] = Y1
     elif direction == 'west':
         X1 = X-1
-        if f'{X1},{Y}' in wampus:
+        if X1 == origin['X'] and Y == origin['Y'] and len(coins) == 0:
+            set_visited_cell(board, X, Y)
+            reset_map(board)
+            dead = True
+        elif f'{X1},{Y}' in wampus:
             set_visited_cell(board, X, Y)
             reset_map(board)
             dead = True
@@ -332,7 +347,11 @@ def move_forward(board):
             agent['X'] = X1
     elif direction == 'east':
         X1 = X+1
-        if f'{X1},{Y}' in wampus:
+        if X1 == origin['X'] and Y == origin['Y'] and len(coins) == 0:
+            set_visited_cell(board, X, Y)
+            reset_map(board)
+            dead = True
+        elif f'{X1},{Y}' in wampus:
             set_visited_cell(board, X, Y)
             reset_map(board)
             dead = True
@@ -348,7 +367,11 @@ def move_forward(board):
             agent['X'] = X1
     elif direction == 'south':
         Y1 = Y-1
-        if f'{X},{Y1}' in wampus:
+        if X == origin['X'] and Y1 == origin['Y'] and len(coins) == 0:
+            set_visited_cell(board, X, Y)
+            reset_map(board)
+            dead = True
+        elif f'{X},{Y1}' in wampus:
             set_visited_cell(board, X, Y)
             reset_map(board)
             dead = True
@@ -403,6 +426,7 @@ def turn_right(board):
 def pickup(board):
     X = agent['X']
     Y = agent['Y']
+    coins.remove(f'{X},{Y}')
     change_symbol(board, X, Y, 7, ".")
 
 
@@ -552,78 +576,6 @@ def print_abs_map(board):
         for j in range(innerH):
             print(line[i][j])
         print()
-
-
-# def print_relative_map():
-#     # (0,0) == (7,6)
-#     rh = h*2
-#     rw = w*2
-#     board = [[generate_cell() for Y in range(rh)] for X in range(rw)]
-
-#     for X in range(len(board)):
-#         for Y in range(len(board[X])):
-#             change_rsymbol(board, X, Y, 5, "?")
-
-#     visited = []
-#     visited_map = []
-#     for soln in prolog.query("visited(X,Y)"):
-#         print(soln)
-#         visited.append(f'{soln["X"]},{soln["Y"]}')
-#         visited_map.append(f'{w + soln["X"]},{h + soln["Y"]}')
-#         set_rvisited_cell(board, w + soln["X"], h + soln["Y"])
-
-#     print(visited)
-
-#     current = list(prolog.query("current(X,Y,D)"))[0]
-#     print(current)
-
-#     direction = current['D']
-#     X = current['X']
-#     Y = current['Y']
-
-#     set_ragent_cell(board, w+X, h+Y, direction)
-
-#     bump = bool(list(prolog.query('bump')))
-
-#     if bump:
-#         set_rwall_cell(board, X, Y, direction)
-
-#     for coor in rwalls:
-#         X = int(coor.split(',')[0])
-#         Y = int(coor.split(',')[1])
-#         set_rwall_cell(board, X, Y, '')
-
-#     line = [["" for Y in range(innerH)] for X in range(rh)]
-
-#     for X in range(len(board)):
-#         for Y in range(len(board[X])):
-#             cell = board[X][Y]
-#             if f'{X},{Y}' in visited_map:
-#                 for innerX in range(len(cell)):
-#                     for innerY in range(len(cell[innerX])):
-#                         if innerX == 2 and X != len(board)-1:
-#                             line[Y][innerY] += f" {cell[innerX][innerY]}  "
-#                         else:
-#                             line[Y][innerY] += f" {cell[innerX][innerY]}"
-#             elif f'{X-1},{Y}' in visited_map or f'{X+1},{Y}' in visited_map or f'{X},{Y-1}' in visited_map or f'{X},{Y+1}' in visited_map:
-#                 for innerX in range(len(cell)):
-#                     for innerY in range(len(cell[innerX])):
-#                         if innerX == 2 and X != len(board)-1:
-#                             line[Y][innerY] += f" {cell[innerX][innerY]}  "
-#                         else:
-#                             line[Y][innerY] += f" {cell[innerX][innerY]}"
-#             else:
-#                 for innerX in range(len(cell)):
-#                     for innerY in range(len(cell[innerX])):
-#                         if innerX == 2 and X != len(board)-1:
-#                             line[Y][innerY] += f"    "
-#                         else:
-#                             line[Y][innerY] += f"  "
-
-#     for i in range(rh-1, -1, -1):
-#         for j in range(innerH):
-#             print(line[i][j])
-#         print()
 
 
 def generate_relative_map():
@@ -799,16 +751,31 @@ def main():
         print("1. Test Case 1: Correctness of Agent's localisation and mapping abilities")
         print("2. Test Case 2: Correctness of Agent's sensory inference")
         print("3. Test Case 3: Correctness of Agent's memory management in response to stepping though a Confundus Portal")
-        print("4. Free Roaming Mode")
+        print("4. Test Case 4: Correctness of Agent's exploration capabilities")
+        print("5. Test Case 5: Correctness of the Agent's end-game reset in a manner similar to that of Confundus Portal reset.")
+        print("6. Free Roaming Mode")
         print("0. Exit")
         option = input()
         if option == '1':
-            # Action Sequence [turnright,moveforward,turnleft,moveforward,pickup,moveforward,moveforward,moveforward]
+            # Explore the whole map to test localisation and mapping abilities
+            # Action Sequence ['turnleft', 'moveforward', 'turnright', 'moveforward', 'moveforward',
+            #    'moveforward', 'moveforward', 'turnright', 'turnright', 'moveforward',
+            #    'moveforward', 'turnright', 'moveforward', 'turnleft', 'turnleft',
+            #    'moveforward', 'moveforward', 'turnright', 'moveforward', 'moveforward',
+            #    'turnright', 'turnright', 'moveforward', 'moveforward', 'moveforward',
+            #    'moveforward', 'turnright', 'moveforward', 'moveforward', 'moveforward',
+            #    'turnright', 'moveforward', 'moveforward', 'moveforward', 'moveforward']
             list(prolog.query("reborn"))
             print_abs_map(board)
             print_relative_map(rmap)
-            action_sequence = ['turnright', 'moveforward', 'turnleft',
-                               'moveforward', 'pickup', 'moveforward', 'moveforward', 'moveforward']
+            action_sequence = ['turnleft', 'moveforward', 'turnright', 'moveforward', 'moveforward',
+                               'moveforward', 'moveforward', 'turnright', 'turnright', 'moveforward',
+                               'moveforward', 'turnright', 'moveforward', 'turnleft', 'turnleft',
+                               'moveforward', 'moveforward', 'turnright', 'moveforward', 'moveforward',
+                               'turnright', 'turnright', 'moveforward', 'moveforward', 'moveforward',
+                               'moveforward', 'turnright', 'moveforward', 'moveforward', 'moveforward',
+                               'turnright', 'moveforward', 'moveforward', 'moveforward', 'moveforward']
+
             print(action_sequence)
             for action in action_sequence:
                 move_agent(board, action)
@@ -829,7 +796,7 @@ def main():
             rwalls_map.clear()
             rmap = generate_relative_map()
         elif option == '2':
-            # Action Sequence [turnright,moveforward,turnleft,moveforward,pickup,moveforward,moveforward,moveforward]
+            # Action Sequence ['turnright', 'moveforward', 'turnleft', 'moveforward', 'pickup', 'moveforward', 'moveforward', 'moveforward']
             list(prolog.query("reborn"))
             print_abs_map(board)
             print_relative_map(rmap)
@@ -855,7 +822,7 @@ def main():
             rwalls_map.clear()
             rmap = generate_relative_map()
         elif option == '3':
-            # Action Sequence [moveforward,turnright,moveforward,turnleft,moveforward,moveforward,turnright,moveforward,turnright,moveforward]
+            # Action Sequence ['moveforward', 'turnright', 'moveforward', 'turnleft', 'moveforward', 'moveforward', 'turnright', 'moveforward', 'turnright', 'moveforward']
             list(prolog.query("reborn"))
             print_abs_map(board)
             print_relative_map(rmap)
@@ -890,7 +857,42 @@ def main():
             rwalls.clear()
             rwalls_map.clear()
             rmap = generate_relative_map()
-        elif option == '4':
+        elif option == '5':
+            # Action Sequence ['moveforward', 'turnright', 'moveforward','pickup', 'turnright', 'moveforward', 'turnright', 'moveforward']
+            list(prolog.query("reborn"))
+            print_abs_map(board)
+            print_relative_map(rmap)
+            action_sequence = ['moveforward', 'turnright', 'moveforward',
+                               'pickup', 'turnright', 'moveforward', 'turnright', 'moveforward']
+            print(action_sequence)
+            for action in action_sequence:
+                move_agent(board, action)
+                print_abs_map(board)
+                if dead:
+                    list(prolog.query("reborn"))
+                    visited.clear()
+                    visited_map.clear()
+                    rwalls.clear()
+                    rwalls_map.clear()
+                    rmap = generate_relative_map()
+                    dead = False
+                else:
+                    list(prolog.query(
+                        f"move({action},{get_indicator(board)})"))
+                update_relative_map(rmap)
+                print_relative_map(rmap)
+                check_localisation()
+            X = agent['X']
+            Y = agent['Y']
+            set_visited_cell(board, X, Y)
+            reset_map(board)
+            list(prolog.query("reborn"))
+            visited.clear()
+            visited_map.clear()
+            rwalls.clear()
+            rwalls_map.clear()
+            rmap = generate_relative_map()
+        elif option == '6':
             list(prolog.query("reborn"))
             # list(prolog.query("reposition([on,off,off,off,off,off])"))
             # get_indicator(board)
