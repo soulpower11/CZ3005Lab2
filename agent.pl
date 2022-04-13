@@ -523,6 +523,11 @@ wumpus(X,Y2)
 ;    !
 ).
 
+addtoglitterlist(X) :-
+    nb_getval(glitterlist, L),
+    append(L, X, NL),
+    nb_setval(glitterlist, NL).
+
 addtosafelist(X) :-
     nb_getval(safelist, L),
     append(L, X, NL),
@@ -534,7 +539,11 @@ addtovisitedlist(X) :-
     nb_setval(visitedlist, NL).
 
 checkunvisitedsafecell :-
-    (   nb_setval(safelist, []),
+    (   
+        nb_delete(safelist),
+        nb_delete(visitedlist),
+        nb_delete(unvisitedlist),
+        nb_setval(safelist, []),
         nb_setval(visitedlist, []),
         nb_setval(unvisitedlist, []),
         forall(safe(X, Y),
@@ -550,9 +559,15 @@ checkunvisitedsafecell :-
         nb_setval(unvisitedlist, L)
     ).
 
+getglitterlist :-
+    nb_delete(glitterlist),
+    nb_setval(glitterlist, []),
+    forall(glitter(X, Y), addtoglitterlist([[X,Y]])).
+    
+
 explore(L) :-
-    (confounded) 
-    ->  L=[turnright]
+    ((confounded) 
+    ->  L=[moveforward]
     ;   
         current(X,Y,D),
         addvisited(X, Y),
@@ -561,19 +576,41 @@ explore(L) :-
         nb_setval(movelist, []),
         checkunvisitedsafecell,
         nb_getval(unvisitedlist, UVL),
+        writeln(UVL),
         getmovelist(UVL),
-        nb_getval(movelist, L).
+        nb_getval(movelist, TL),
+        length(TL, Length),
+        (Length=0
+        ->  
+            getglitterlist,
+            nb_getval(glitterlist, GL),
+            getpickuplist(GL)
+        ;   !
+        ),
+        nb_getval(movelist, L)
+    ).
+
+getpickuplist([H|T]) :-
+    movetolocation(H),
+    nb_getval(movelist, List),
+    append(List, [pickup], NL),
+    nb_setval(movelist, NL),
+    length(T, L),
+    L\=0
+    ->  getmovelist(T); !.    
 
 getmovelist([H|T]) :-
+    writeln(H),
     movetolocation(H),
+    writeln(T),
     length(T, L),
     L\=0
     ->  getmovelist(T); !.
 
 gototarget(StartX, EndX, StartY, EndY):-
     ((StartX \= EndX; StartY \= EndY) ->
-        moveX(StartX, EndX),
         moveY(StartY, EndY),
+        moveX(StartX, EndX),
         tempcurrent(NStartX,NStartY,_),
         gototarget(NStartX, EndX, NStartY, EndY)
     ;   !
@@ -634,12 +671,11 @@ addmoveforwardY(Y) :-
     ).
 
 moveX(S,E):-
-    X is E-S,
-    (   X>0
+    (   S<E
     ->  changedirection(reast),
         S1 is S+1,
         forall(upto(S1,E,1,X1),addmoveforwardX(X1))
-    ;   X<0 
+    ;   S>E 
     ->  changedirection(rwest),
         S1 is S-1,
         forall(downto(E,S1,1,X1),addmoveforwardX(X1))
@@ -647,14 +683,51 @@ moveX(S,E):-
     ).
 
 moveY(S,E):-
-    Y is E-S,
-    (   Y>0
+    (   S<E
     ->  changedirection(rnorth),
         S1 is S+1,
         forall(upto(S1,E,1,Y1),addmoveforwardY(Y1))
-    ;   Y<0
+    ;   S>E
     ->  changedirection(rsouth),
         S1 is S-1,
         forall(downto(E,S1,1,Y1),addmoveforwardY(Y1))
     ;   !
     ).
+
+% moveX(S,E):-
+%     (   S<E
+%     ->  changedirection(reast),
+%         S1 is S+1,
+%         loopX(S1, E, 1)
+%     ;   S>E
+%     ->  changedirection(rwest),
+%         S1 is S-1,
+%         loopX(S1, E, -1)
+%     ;   !
+%     ).
+
+% moveY(S,E):-
+%     (   S<E
+%     ->  changedirection(rnorth),
+%         S1 is S+1,
+%         loopY(S1, E, 1)
+%     ;   S>E
+%     ->  changedirection(rsouth),
+%         S1 is S-1,
+%         loopY(S1, E, -1)
+%     ;   !
+%     ).
+
+% loopX(Start, End, Step):-
+%     addmoveforwardX(Start),
+%     I is Start+Step,
+%     (Start =< End 
+%     ->  loopX(I, End, Step)
+%     ;   !).
+
+% loopY(Start, End, Step):-
+%     addmoveforwardY(Start),
+%     I is Start+Step,
+%     (Start =< End 
+%     ->  loopY(I, End, Step)
+%     ;   !).

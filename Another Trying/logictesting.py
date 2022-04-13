@@ -16,7 +16,7 @@ print(unvisitedlist)
 
 tempcurrentlocation = {
     'X': -1,
-    'Y': 0,
+    'Y': 2,
     'D': 'reast'
 }
 
@@ -51,7 +51,8 @@ def changedirection(G):
 def moveX(start, end):
     # print(f'moveX start: {start}, end: {end}')
     X = end - start
-    if X > 0:
+    if start < end:
+        # if X > 0:
         # print(tempcurrentlocation['D'])
         changedirection('reast')
         # print(tempcurrentlocation['D'])
@@ -60,7 +61,8 @@ def moveX(start, end):
                 tempcurrentlocation['X'] = i
             else:
                 break
-    elif X < 0:
+    elif start > end:
+        # elif X < 0:
         # print(tempcurrentlocation['D'])
         changedirection('rwest')
         # print(tempcurrentlocation['D'])
@@ -74,7 +76,8 @@ def moveX(start, end):
 def moveY(start, end):
     # print(f'moveY start: {start}, end: {end}')
     Y = end - start
-    if Y > 0:
+    # if Y > 0:
+    if start < end:
         # print(tempcurrentlocation['D'])
         changedirection('rnorth')
         # print(tempcurrentlocation['D'])
@@ -84,7 +87,8 @@ def moveY(start, end):
             else:
                 break
 
-    elif Y < 0:
+    # elif Y < 0:
+    elif start > end:
         # print(tempcurrentlocation['D'])
         changedirection('rsouth')
         # print(tempcurrentlocation['D'])
@@ -95,8 +99,13 @@ def moveY(start, end):
                 break
 
 
-movetolocation([0, 1])
-
+# movetolocation([-2, 1])
+# print(-2 > -1)
+# print(-2 > -1)
+# Start < End
+print(-4 < -1)
+#
+print(-1 > -4)
 
 # def test():
 #     for i in range(1, -1-1, - 1):

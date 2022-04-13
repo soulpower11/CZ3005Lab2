@@ -1082,7 +1082,7 @@ def main():
                     update_relative_map(board, rmap)
                     print_relative_map(rmap)
                     check_localisation()
-                    if hit_wall:
+                    if hit_wall(board):
                         break
 
         elif option == '5':
