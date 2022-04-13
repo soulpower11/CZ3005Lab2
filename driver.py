@@ -598,6 +598,17 @@ def get_indicator(board):
     return indicators
 
 
+def hit_wall(board):
+    X = agent['X']
+    Y = agent['Y']
+    cell = board[X][Y]
+
+    if cell[1][2] == 'B':
+        return True
+
+    return False
+
+
 def print_map_with_border(board):
     line = [["|" for Y in range(innerH)] for X in range(h)]
 
@@ -1028,10 +1039,13 @@ def main():
             while True:
                 actions = []
                 for soln in prolog.query("explore(L)"):
-                    actions = [action.value for action in soln['L']]
-                    print(actions)
-                    if len(actions) == 0:
-                        break
+                    # print(soln)
+                    actions = [action for action in soln['L']]
+
+                print(f'actions: {actions}')
+
+                if len(actions) == 0:
+                    break
 
                 for action in actions:
                     move_agent(board, action)
@@ -1068,6 +1082,8 @@ def main():
                     update_relative_map(board, rmap)
                     print_relative_map(rmap)
                     check_localisation()
+                    if hit_wall:
+                        break
 
         elif option == '5':
             # Action Sequence ['moveforward', 'turnright', 'moveforward','pickup', 'turnright', 'moveforward', 'turnright', 'moveforward']

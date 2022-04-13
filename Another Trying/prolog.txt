@@ -1,0 +1,32 @@
+[agent].
+
+reborn,
+assertz(safe(0,0)),
+assertz(safe(1,0)), 
+assertz(safe(-1,0)),
+assertz(safe(0,1)),
+assertz(safe(0,-1)),
+assertz(visited(0,0)),
+retractall(current(_,_,_)),
+retractall(tempcurrent(_,_,_)),
+retractall(confounded),
+assertz(current(0, 0, reast)),
+assertz(tempcurrent(0,0,reast)),
+nb_setval(movelist, []),
+checkunvisitedsafecell.
+
+
+nb_getval(unvisitedlist, UVL),
+nb_getval(movelist, L),
+tempcurrent(X,Y,D).
+
+nb_getval(movelist, L),
+append(L, [moveforward], NL),
+nb_setval(movelist, NL),
+nb_getval(movelist, A).
+
+goforward.
+
+movetoward.
+
+nth0(0, UVL, Elem),
