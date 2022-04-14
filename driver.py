@@ -884,26 +884,41 @@ def main():
         option = input()
         if option == '1':
             # Explore the whole map to test localisation and mapping abilities
-            # Action Sequence ['turnleft', 'moveforward', 'turnright', 'moveforward', 'moveforward',
-            #    'moveforward', 'moveforward', 'turnright', 'turnright', 'moveforward',
-            #    'moveforward', 'turnright', 'moveforward', 'turnleft', 'turnleft',
-            #    'moveforward', 'moveforward', 'turnright', 'moveforward', 'moveforward',
-            #    'turnright', 'turnright', 'moveforward', 'moveforward', 'moveforward',
-            #    'moveforward', 'turnright', 'moveforward', 'moveforward', 'moveforward',
-            #    'turnright', 'moveforward', 'moveforward', 'moveforward', 'moveforward']
+            # Action Sequence ['turnright', 'turnright', 'moveforward', 'turnright', 'moveforward',
+            #    'moveforward', 'turnleft', 'moveforward', 'turnleft', 'turnleft', 'moveforward',
+            #    'turnleft', 'moveforward', 'turnright', 'moveforward',
+            #    'turnleft', 'moveforward', 'turnright', 'moveforward',
+            #    'turnleft', 'moveforward', 'turnright', 'moveforward',
+            #    'turnright', 'turnright', 'moveforward', 'turnleft', 'moveforward',
+            #    'turnright', 'moveforward', 'moveforward',
+            #    'turnleft', 'moveforward',
+            #    'turnleft',  'moveforward', 'moveforward', 'moveforward', 'moveforward',
+            #    'turnright', 'moveforward', 'turnleft', 'moveforward',
+            #    'turnright', 'moveforward', 'turnleft', 'moveforward',
+            #    'turnright', 'moveforward', 'turnright', 'moveforward',
+            #    'turnleft', 'moveforward', 'turnright', 'moveforward',
+            #    'turnleft', 'moveforward', 'turnright', 'moveforward',
+            #    'turnleft', 'moveforward', 'turnright', 'moveforward']
             list(prolog.query("reborn"))
             board = generate_abs_map()
             rmap = generate_relative_map(board)
             print_abs_map(board)
             print_relative_map(rmap)
-            action_sequence = ['turnleft', 'moveforward', 'turnright', 'moveforward', 'moveforward',
-                               'moveforward', 'moveforward', 'turnright', 'turnright', 'moveforward',
-                               'moveforward', 'turnright', 'moveforward', 'turnleft', 'turnleft',
-                               'moveforward', 'moveforward', 'turnright', 'moveforward', 'moveforward',
-                               'turnright', 'turnright', 'moveforward', 'moveforward', 'moveforward',
-                               'moveforward', 'turnright', 'moveforward', 'moveforward', 'moveforward',
-                               'turnright', 'moveforward', 'moveforward', 'moveforward', 'moveforward']
-
+            action_sequence = ['turnright', 'turnright', 'moveforward', 'turnright', 'moveforward',
+                               'moveforward', 'turnleft', 'moveforward', 'turnleft', 'turnleft', 'moveforward',
+                               'turnleft', 'moveforward', 'turnright', 'moveforward',
+                               'turnleft', 'moveforward', 'turnright', 'moveforward',
+                               'turnleft', 'moveforward', 'turnright', 'moveforward',
+                               'turnright', 'turnright', 'moveforward', 'turnleft', 'moveforward',
+                               'turnright', 'moveforward', 'moveforward',
+                               'turnleft', 'moveforward',
+                               'turnleft',  'moveforward', 'moveforward', 'moveforward', 'moveforward',
+                               'turnright', 'moveforward', 'turnleft', 'moveforward',
+                               'turnright', 'moveforward', 'turnleft', 'moveforward',
+                               'turnright', 'moveforward', 'turnright', 'moveforward',
+                               'turnleft', 'moveforward', 'turnright', 'moveforward',
+                               'turnleft', 'moveforward', 'turnright', 'moveforward',
+                               'turnleft', 'moveforward', 'turnright', 'moveforward']
             print(action_sequence)
             for action in action_sequence:
                 move_agent(board, action)
@@ -1005,37 +1020,6 @@ def main():
                     check_localisation()
                     if hit_wall(board):
                         break
-
-        # elif option == '5':
-        #     # Action Sequence ['moveforward', 'turnright', 'moveforward','pickup', 'turnright', 'moveforward', 'turnright', 'moveforward']
-        #     list(prolog.query("reborn"))
-        #     board = generate_abs_map()
-        #     rmap = generate_relative_map(board)
-        #     print_abs_map(board)
-        #     print_relative_map(rmap)
-        #     action_sequence = ['moveforward', 'turnright', 'moveforward',
-        #                        'pickup', 'turnright', 'moveforward', 'turnright', 'moveforward']
-        #     print(action_sequence)
-        #     for action in action_sequence:
-        #         move_agent(board, action)
-        #         if action == 'pickup':
-        #             X = agent['X']
-        #             Y = agent['Y']
-        #             coins.remove(f'{X},{Y}')
-
-        #         print_abs_map(board)
-        #         if gameend:
-        #             list(prolog.query("reborn"))
-        #             clear_driver_variables()
-        #             rmap = generate_relative_map(board)
-        #             gameend = False
-        #         else:
-        #             list(prolog.query(
-        #                 f"move({action},{get_indicator(board)})"))
-        #         update_relative_map(board, rmap)
-        #         print_relative_map(rmap)
-        #         check_localisation()
-        #     clear_driver_variables()
         elif option == '5':
             # Action Sequence ['moveforward', 'turnright', 'moveforward','pickup', 'turnright', 'moveforward', 'turnright', 'moveforward']
             list(prolog.query("reborn"))
