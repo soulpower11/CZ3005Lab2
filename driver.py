@@ -999,7 +999,10 @@ def main():
                 actions = []
                 for soln in prolog.query("explore(L)"):
                     # print(soln)
-                    actions = [action for action in soln['L']]
+                    try:
+                        actions = [action for action in soln['L']]
+                    except:
+                        break
 
                 print(f'actions: {actions}')
                 current = list(prolog.query("current(X,Y,D)"))[0]

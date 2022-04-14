@@ -690,7 +690,7 @@ print("\n\n")
 print("wumpus world")
 print("absolute map:\n")
 
-prolog.consult('agent.pl')
+prolog.consult('agent2.pl')
 
 
 # need to add list for query to work
