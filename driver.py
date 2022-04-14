@@ -994,7 +994,7 @@ def main():
             list(prolog.query("reborn"))
             board = generate_abs_map()
             rmap = generate_relative_map(board)
-
+            i = 0
             while True:
                 actions = []
                 for soln in prolog.query("explore(L)"):
@@ -1004,7 +1004,7 @@ def main():
                 print(f'actions: {actions}')
                 current = list(prolog.query("current(X,Y,D)"))[0]
 
-                if len(actions) == 0 and current['X'] == 0 and current['Y'] == 0:
+                if (len(actions) == 0 and current['X'] == 0 and current['Y'] == 0) or i == 2:
                     print('Exploration Stops')
                     X = agent['X']
                     Y = agent['Y']
@@ -1014,6 +1014,8 @@ def main():
                     clear_driver_variables()
                     rmap = generate_relative_map(board)
                     break
+                elif len(actions) == 0:
+                    i += 1
 
                 for action in actions:
                     move_agent(board, action)
