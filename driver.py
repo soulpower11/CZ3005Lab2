@@ -921,7 +921,7 @@ def main():
             rmap = generate_relative_map(board)
             print_abs_map(board)
             print_relative_map(rmap)
-            action_sequence = ['turnright', 'moveforward', 'turnleft',
+            action_sequence = ['shoot', 'turnright', 'moveforward', 'turnleft',
                                'moveforward', 'pickup', 'moveforward', 'moveforward', 'moveforward']
             print(action_sequence)
             for action in action_sequence:
@@ -1006,6 +1006,36 @@ def main():
                     if hit_wall(board):
                         break
 
+        # elif option == '5':
+        #     # Action Sequence ['moveforward', 'turnright', 'moveforward','pickup', 'turnright', 'moveforward', 'turnright', 'moveforward']
+        #     list(prolog.query("reborn"))
+        #     board = generate_abs_map()
+        #     rmap = generate_relative_map(board)
+        #     print_abs_map(board)
+        #     print_relative_map(rmap)
+        #     action_sequence = ['moveforward', 'turnright', 'moveforward',
+        #                        'pickup', 'turnright', 'moveforward', 'turnright', 'moveforward']
+        #     print(action_sequence)
+        #     for action in action_sequence:
+        #         move_agent(board, action)
+        #         if action == 'pickup':
+        #             X = agent['X']
+        #             Y = agent['Y']
+        #             coins.remove(f'{X},{Y}')
+
+        #         print_abs_map(board)
+        #         if gameend:
+        #             list(prolog.query("reborn"))
+        #             clear_driver_variables()
+        #             rmap = generate_relative_map(board)
+        #             gameend = False
+        #         else:
+        #             list(prolog.query(
+        #                 f"move({action},{get_indicator(board)})"))
+        #         update_relative_map(board, rmap)
+        #         print_relative_map(rmap)
+        #         check_localisation()
+        #     clear_driver_variables()
         elif option == '5':
             # Action Sequence ['moveforward', 'turnright', 'moveforward','pickup', 'turnright', 'moveforward', 'turnright', 'moveforward']
             list(prolog.query("reborn"))
@@ -1013,22 +1043,17 @@ def main():
             rmap = generate_relative_map(board)
             print_abs_map(board)
             print_relative_map(rmap)
-            action_sequence = ['moveforward', 'turnright', 'moveforward',
-                               'pickup', 'turnright', 'moveforward', 'turnright', 'moveforward']
+            action_sequence = ['moveforward',
+                               'moveforward', 'moveforward']
             print(action_sequence)
             for action in action_sequence:
                 move_agent(board, action)
-                if action == 'pickup':
-                    X = agent['X']
-                    Y = agent['Y']
-                    coins.remove(f'{X},{Y}')
-
                 print_abs_map(board)
-                if gameend:
+                if dead:
                     list(prolog.query("reborn"))
                     clear_driver_variables()
                     rmap = generate_relative_map(board)
-                    gameend = False
+                    dead = False
                 else:
                     list(prolog.query(
                         f"move({action},{get_indicator(board)})"))
