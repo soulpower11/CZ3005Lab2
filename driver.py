@@ -1,3 +1,4 @@
+import random
 from pyswip import Prolog
 
 # X row width
@@ -318,11 +319,23 @@ def teleport(board):
             if f'{X},{Y}' not in wampus and f'{X},{Y}' not in walls and f'{X},{Y}' not in portals:
                 change_symbol(board, X, Y, 5, "s")
 
-    set_agent_cell(board, 5, 4, 'north')
-    change_symbol(board, 5, 4, 1, "%")
+    randY = random.randint(0, h-1)
+    randX = random.randint(0, w-1)
+    while f'{randX},{randY}' in wampus or f'{randX},{randY}' in walls or f'{randX},{randY}' in portals or f'{randX+1},{randY}' in portals or f'{randX-1},{randY}' in portals or f'{randX+1},{randY}' in wampus or f'{randX-1},{randY}' in wampus or f'{randX},{randY+1}' in portals or f'{randX},{randY-1}' in portals or f'{randX},{randY+1}' in wampus or f'{randX},{randY-1}' in wampus:
+        randY = random.randint(0, h-1)
+        randX = random.randint(0, w-1)
+
+    set_agent_cell(board, randX, randY, 'north')
+    change_symbol(board, randX, randY, 1, "%")
     agent['direction'] = 'north'
-    agent['X'] = 5
-    agent['Y'] = 4
+    agent['X'] = randX
+    agent['Y'] = randY
+
+    # set_agent_cell(board, 5, 4, 'north')
+    # change_symbol(board, 5, 4, 1, "%")
+    # agent['direction'] = 'north'
+    # agent['X'] = 5
+    # agent['Y'] = 4
 
 
 def move_forward(board):
@@ -989,8 +1002,9 @@ def main():
                     actions = [action for action in soln['L']]
 
                 print(f'actions: {actions}')
+                current = list(prolog.query("current(X,Y,D)"))[0]
 
-                if len(actions) == 0:
+                if len(actions) == 0 and current['X'] == 0 and current['Y'] == 0:
                     print('Exploration Stops')
                     X = agent['X']
                     Y = agent['Y']
@@ -1023,6 +1037,7 @@ def main():
                     check_localisation()
                     if hit_wall(board):
                         break
+
         elif option == '5':
             # Action Sequence ['moveforward', 'turnright', 'moveforward','pickup', 'turnright', 'moveforward', 'turnright', 'moveforward']
             list(prolog.query("reborn"))
