@@ -1045,6 +1045,21 @@ def main():
                 print(f'actions: {actions}')
 
                 if len(actions) == 0:
+                    print('Exploration Stops')
+                    X = agent['X']
+                    Y = agent['Y']
+                    set_visited_cell(board, X, Y)
+                    reset_map(board)
+                    list(prolog.query("reborn"))
+                    visited.clear()
+                    visited_map.clear()
+                    rwalls.clear()
+                    rwalls_map.clear()
+                    rcurrent = ''
+                    rcurrent_map = ''
+                    safe_map.clear()
+                    safe.clear()
+                    rmap = generate_relative_map(board)
                     break
 
                 for action in actions:
