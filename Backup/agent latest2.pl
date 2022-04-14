@@ -576,70 +576,49 @@ explore(L) :-
         nb_setval(movelist, []),
         checkunvisitedsafecell,
         nb_getval(unvisitedlist, UVL),
-        length(UVL, Length),
+        writeln(UVL),
+        getmovelist(UVL),
+        nb_getval(movelist, TL),
+        length(TL, Length),
         (Length=0
         ->  
             getglitterlist,
             nb_getval(glitterlist, GL),
             getpickuplist(GL)
-        ;   getmovelistYX(UVL)
-        ),
-        nb_getval(movelist, ML),
-        length(ML, Length2),
-        ( (Length2=0, Length \=0)
-        ->  
-            getmovelistXY(UVL)
         ;   !
         ),
         nb_getval(movelist, L)
     ).
 
 getpickuplist([H|T]) :-
-    movetolocationYX(H),
+    movetolocation(H),
     nb_getval(movelist, List),
     append(List, [pickup], NL),
     nb_setval(movelist, NL),
     length(T, L),
     L\=0
-    ->  getpickuplist(T); !.   
+    ->  getmovelist(T); !.    
 
-getmovelistXY([H|T]) :-
-        movetolocationXY(H),
-        length(T, L),
-        L\=0
-        ->  getmovelistXY(T); !.
-    
-gototargetXY(StartX, EndX, StartY, EndY):-
-    ((StartX \= EndX; StartY \= EndY) ->
-        moveX(StartY, EndY),
-        moveY(StartX, EndX),
-        tempcurrent(NStartX,NStartY,_),
-        gototargetYX(NStartX, EndX, NStartY, EndY)
-    ;   !
-    ). 
-
-movetolocationXY([EndX,EndY]):-
-    tempcurrent(StartX,StartY,_),
-    gototargetXY(StartX, EndX, StartY, EndY).
-
-getmovelistYX([H|T]) :-
-    movetolocationYX(H),
+getmovelist([H|T]) :-
+    writeln(H),
+    movetolocation(H),
+    writeln(T),
     length(T, L),
     L\=0
-    ->  getmovelistYX(T); !.
+    ->  getmovelist(T); !.
 
-gototargetYX(StartX, EndX, StartY, EndY):-
+gototarget(StartX, EndX, StartY, EndY):-
     ((StartX \= EndX; StartY \= EndY) ->
         moveY(StartY, EndY),
         moveX(StartX, EndX),
         tempcurrent(NStartX,NStartY,_),
-        gototargetXY(NStartX, EndX, NStartY, EndY)
+        gototarget(NStartX, EndX, NStartY, EndY)
     ;   !
     ).
 
-movetolocationYX([EndX,EndY]):-
+movetolocation([EndX,EndY]):-
     tempcurrent(StartX,StartY,_),
-    gototargetYX(StartX, EndX, StartY, EndY).
+    gototarget(StartX, EndX, StartY, EndY).
 
 changedirection(G):-
     tempcurrent(X,Y,D),
@@ -714,3 +693,41 @@ moveY(S,E):-
         forall(downto(E,S1,1,Y1),addmoveforwardY(Y1))
     ;   !
     ).
+
+% moveX(S,E):-
+%     (   S<E
+%     ->  changedirection(reast),
+%         S1 is S+1,
+%         loopX(S1, E, 1)
+%     ;   S>E
+%     ->  changedirection(rwest),
+%         S1 is S-1,
+%         loopX(S1, E, -1)
+%     ;   !
+%     ).
+
+% moveY(S,E):-
+%     (   S<E
+%     ->  changedirection(rnorth),
+%         S1 is S+1,
+%         loopY(S1, E, 1)
+%     ;   S>E
+%     ->  changedirection(rsouth),
+%         S1 is S-1,
+%         loopY(S1, E, -1)
+%     ;   !
+%     ).
+
+% loopX(Start, End, Step):-
+%     addmoveforwardX(Start),
+%     I is Start+Step,
+%     (Start =< End 
+%     ->  loopX(I, End, Step)
+%     ;   !).
+
+% loopY(Start, End, Step):-
+%     addmoveforwardY(Start),
+%     I is Start+Step,
+%     (Start =< End 
+%     ->  loopY(I, End, Step)
+%     ;   !).

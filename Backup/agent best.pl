@@ -576,6 +576,7 @@ explore(L) :-
         nb_setval(movelist, []),
         checkunvisitedsafecell,
         nb_getval(unvisitedlist, UVL),
+        % writeln(UVL),
         length(UVL, Length),
         (Length=0
         ->  
@@ -586,6 +587,7 @@ explore(L) :-
         ),
         nb_getval(movelist, ML),
         length(ML, Length2),
+        % writeln(L),
         ( (Length2=0, Length \=0)
         ->  
             getmovelistXY(UVL)
@@ -604,7 +606,9 @@ getpickuplist([H|T]) :-
     ->  getpickuplist(T); !.   
 
 getmovelistXY([H|T]) :-
+        % writeln(H),
         movetolocationXY(H),
+        % writeln(T),
         length(T, L),
         L\=0
         ->  getmovelistXY(T); !.
@@ -623,7 +627,9 @@ movetolocationXY([EndX,EndY]):-
     gototargetXY(StartX, EndX, StartY, EndY).
 
 getmovelistYX([H|T]) :-
+    % writeln(H),
     movetolocationYX(H),
+    % writeln(T),
     length(T, L),
     L\=0
     ->  getmovelistYX(T); !.
@@ -633,7 +639,7 @@ gototargetYX(StartX, EndX, StartY, EndY):-
         moveY(StartY, EndY),
         moveX(StartX, EndX),
         tempcurrent(NStartX,NStartY,_),
-        gototargetXY(NStartX, EndX, NStartY, EndY)
+        gototargetYX(NStartX, EndX, NStartY, EndY)
     ;   !
     ).
 
@@ -714,3 +720,41 @@ moveY(S,E):-
         forall(downto(E,S1,1,Y1),addmoveforwardY(Y1))
     ;   !
     ).
+
+% moveX(S,E):-
+%     (   S<E
+%     ->  changedirection(reast),
+%         S1 is S+1,
+%         loopX(S1, E, 1)
+%     ;   S>E
+%     ->  changedirection(rwest),
+%         S1 is S-1,
+%         loopX(S1, E, -1)
+%     ;   !
+%     ).
+
+% moveY(S,E):-
+%     (   S<E
+%     ->  changedirection(rnorth),
+%         S1 is S+1,
+%         loopY(S1, E, 1)
+%     ;   S>E
+%     ->  changedirection(rsouth),
+%         S1 is S-1,
+%         loopY(S1, E, -1)
+%     ;   !
+%     ).
+
+% loopX(Start, End, Step):-
+%     addmoveforwardX(Start),
+%     I is Start+Step,
+%     (Start =< End 
+%     ->  loopX(I, End, Step)
+%     ;   !).
+
+% loopY(Start, End, Step):-
+%     addmoveforwardY(Start),
+%     I is Start+Step,
+%     (Start =< End 
+%     ->  loopY(I, End, Step)
+%     ;   !).
