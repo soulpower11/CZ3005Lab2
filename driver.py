@@ -869,6 +869,7 @@ def clear_driver_variables():
 
 def main():
     global dead, teleported, gameend, rcurrent, rcurrent_map
+    list(prolog.query("reborn"))
     board = generate_abs_map()
     rmap = generate_relative_map(board)
     print_abs_map(board)
