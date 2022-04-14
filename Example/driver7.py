@@ -894,6 +894,7 @@ while not quitgame:
             else:
                 actions = []
                 L = list(prolog.query("explore(L)"))
+                print(L)
                 if len(L) == 0:
                     print_slow('Exploration Stops\n')
                     break

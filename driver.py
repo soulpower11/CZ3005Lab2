@@ -10,7 +10,7 @@ w, h = 7, 6
 innerW, innerH = 3, 3
 
 prolog = Prolog()
-prolog.consult("agent.pl")
+prolog.consult("agent2.pl")
 
 
 walls = []
@@ -286,7 +286,7 @@ def generate_abs_map():
     agent.update({'direction': 'north', 'X': 2, 'Y': 1})
     origin.update({'X': 2, 'Y': 1})
     coins.clear()
-    change_symbol(board, 3, 2, 7, "*")
+    change_symbol(board, 5, 4, 7, "*")
     coins.append('3,2')
     set_wumpus_cell(board, 2, 4)
     set_portal_cell(board, 4, 3)
