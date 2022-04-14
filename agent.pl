@@ -581,7 +581,8 @@ explore(L) :-
         ->  
             getglitterlist,
             nb_getval(glitterlist, GL),
-            getpickuplist(GL)
+            getpickuplist(GL),
+            getmovelistYX([[0,0]])
         ;   getmovelistYX(UVL)
         ),
         nb_getval(movelist, ML),
