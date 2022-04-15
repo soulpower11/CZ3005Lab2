@@ -607,7 +607,7 @@ getpickuplist([H|T]) :-
     movetolocationYX(H),
     nb_getval(movelist, List),
     append(List, [pickup], NL),
-    nb_setval(movelist, NL).
+    nb_setval(movelist, NL),
     length(T, L),
     L\=0
     ->  getpickuplist(T); !.   
@@ -683,8 +683,8 @@ changedirection(G):-
 addmoveforwardX(X) :-
     tempcurrent(_,Y,D),
     nb_getval(stop, S),
-    write('stop: '),
-    writeln(S),
+    % write('stop: '),
+    % writeln(S),
     ((safe(X,Y), S=0)
     ->  retractall(tempcurrent(_, _, _)),
         assertz(tempcurrent(X, Y, D)),
@@ -697,8 +697,8 @@ addmoveforwardX(X) :-
 addmoveforwardY(Y) :-
     tempcurrent(X,_,D),
     nb_getval(stop, S),
-    write('stop: '),
-    writeln(S),
+    % write('stop: '),
+    % writeln(S),
     ((safe(X,Y), S=0)
     ->  retractall(tempcurrent(_, _, _)),
         assertz(tempcurrent(X, Y, D)),
