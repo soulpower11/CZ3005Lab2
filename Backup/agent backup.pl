@@ -576,20 +576,12 @@ explore(L) :-
         nb_setval(movelist, []),
         checkunvisitedsafecell,
         nb_getval(unvisitedlist, UVL),
-        % writeln('UVL:'),
-        % writeln(UVL),
         length(UVL, Length),
         (Length=0
         ->  
             getglitterlist,
             nb_getval(glitterlist, GL),
-            % writeln('GL:'),
-            % writeln(GL),
-            length(GL, GLength),
-            (GLength \= 0 
-            -> getpickuplist(GL)
-            ;  !
-            ),
+            getpickuplist(GL),
             getmovelistYX([[0,0]])
         ;   getmovelistYX(UVL)
         ),
@@ -612,18 +604,18 @@ getpickuplist([H|T]) :-
     L\=0
     ->  getpickuplist(T); !.   
 
-getmovelistXY([H|_]) :-
-        movetolocationXY(H).
-        % length(T, L),
-        % L\=0
-        % ->  getmovelistXY(T); !.
+getmovelistXY([H|T]) :-
+        movetolocationXY(H),
+        length(T, L),
+        L\=0
+        ->  getmovelistXY(T); !.
     
 gototargetXY(StartX, EndX, StartY, EndY):-
     ((StartX \= EndX; StartY \= EndY) ->
         moveX(StartY, EndY),
         moveY(StartX, EndX),
         tempcurrent(NStartX,NStartY,_),
-        gototargetXY(NStartX, EndX, NStartY, EndY)
+        gototargetYX(NStartX, EndX, NStartY, EndY)
     ;   !
     ). 
 
@@ -631,18 +623,18 @@ movetolocationXY([EndX,EndY]):-
     tempcurrent(StartX,StartY,_),
     gototargetXY(StartX, EndX, StartY, EndY).
 
-getmovelistYX([H|_]) :-
-    movetolocationYX(H).
-    % length(T, L),
-    % L\=0
-    % ->  getmovelistYX(T); !.
+getmovelistYX([H|T]) :-
+    movetolocationYX(H),
+    length(T, L),
+    L\=0
+    ->  getmovelistYX(T); !.
 
 gototargetYX(StartX, EndX, StartY, EndY):-
     ((StartX \= EndX; StartY \= EndY) ->
         moveY(StartY, EndY),
         moveX(StartX, EndX),
         tempcurrent(NStartX,NStartY,_),
-        gototargetYX(NStartX, EndX, NStartY, EndY)
+        gototargetXY(NStartX, EndX, NStartY, EndY)
     ;   !
     ).
 
@@ -682,35 +674,25 @@ changedirection(G):-
 
 addmoveforwardX(X) :-
     tempcurrent(_,Y,D),
-    nb_getval(stop, S),
-    % write('stop: '),
-    % writeln(S),
-    ((safe(X,Y), S=0)
+    (safe(X,Y) 
     ->  retractall(tempcurrent(_, _, _)),
         assertz(tempcurrent(X, Y, D)),
         nb_getval(movelist, L),
         append(L, [moveforward], NL),
         nb_setval(movelist, NL)
-    ;  nb_setval(stop, 1)
     ).
 
 addmoveforwardY(Y) :-
     tempcurrent(X,_,D),
-    nb_getval(stop, S),
-    % write('stop: '),
-    % writeln(S),
-    ((safe(X,Y), S=0)
+    (safe(X,Y) 
     ->  retractall(tempcurrent(_, _, _)),
         assertz(tempcurrent(X, Y, D)),
         nb_getval(movelist, L),
         append(L, [moveforward], NL),
         nb_setval(movelist, NL)
-     ;  nb_setval(stop, 1)
-     ).
+    ).
 
 moveX(S,E):-
-    nb_delete(stop),
-    nb_setval(stop, 0),
     (   S<E
     ->  changedirection(reast),
         S1 is S+1,
@@ -723,8 +705,6 @@ moveX(S,E):-
     ).
 
 moveY(S,E):-
-    nb_delete(stop),
-    nb_setval(stop, 0),
     (   S<E
     ->  changedirection(rnorth),
         S1 is S+1,

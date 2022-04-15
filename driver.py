@@ -10,7 +10,7 @@ w, h = 7, 6
 innerW, innerH = 3, 3
 
 prolog = Prolog()
-prolog.consult("agent2.pl")
+prolog.consult("agent.pl")
 
 
 walls = []
